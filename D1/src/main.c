@@ -9,10 +9,10 @@ int main(int argc, char** argv){
   double* b;
   double* sol;
   double* check_sol;
-  double r_hat = 1.e-15, cond_numb = 1.e5;
+  double r_hat = 1.e-10, cond_numb = 1.e6; // 1.e5
   FILE* conj;
   
-  int N = 2, n_iter;
+  int N = 2, n_iter, n_rep = 10, j;
   
   A = (double*) malloc(N * N * sizeof(double));
   b = (double*) malloc(N * sizeof(double));
@@ -58,23 +58,25 @@ int main(int argc, char** argv){
   free(check_sol);
 
   /* condition number scaling */
-  conj = fopen("first_scaling.dat", "w");
-  
-  for(N = 10; N < 501; N += 10){
-    A = (double*) malloc(N * N * sizeof(double));
-    b = (double*) malloc(N * sizeof(double));
-    sol = (double*) malloc(N * sizeof(double));
-    
-    fill_defpos_symm_matrix(A, cond_numb, N);
-    fill_source(b, 2., 0.5, N);
-    
-    conj_grad_alg(A, sol, b, r_hat, N, &n_iter);
+  conj = fopen("results/first_scaling.dat", "w");
 
-    fprintf(conj, "%d\t%d\n", N, n_iter);
-    
-    free(A);
-    free(b);
-    free(sol);
+  for(j = 0; j < n_rep; j++){
+    for(N = 10; N < 501; N += 10){
+      A = (double*) malloc(N * N * sizeof(double));
+      b = (double*) malloc(N * sizeof(double));
+      sol = (double*) malloc(N * sizeof(double));
+      
+      fill_defpos_symm_matrix(A, cond_numb, N);
+      fill_source(b, 2., 0.5, N);
+      
+      conj_grad_alg(A, sol, b, r_hat, N, &n_iter);
+      
+      fprintf(conj, "%d\t%d\n", N, n_iter);
+      
+      free(A);
+      free(b);
+      free(sol);
+    }
   }
 
   fclose(conj);
@@ -84,18 +86,21 @@ int main(int argc, char** argv){
   b = (double*) malloc(N * sizeof(double));
   sol = (double*) malloc(N * sizeof(double));
   
-  conj = fopen("sec_scaling.dat", "w");
-  
-  for(cond_numb = 10; cond_numb < 501; cond_numb += 10){
-    
-    fill_defpos_symm_matrix(A, cond_numb, N);
-    fill_source(b, 2., 0.5, N);
-    
-    conj_grad_alg(A, sol, b, r_hat, N, &n_iter);
+  conj = fopen("results/sec_scaling.dat", "w");
 
-    fprintf(conj, "%lg\t%d\n", cond_numb, n_iter);
-    
+  for(j = 0; j < n_rep; j++){
+    for(cond_numb = 10; cond_numb < 501; cond_numb += 10){
+      
+      fill_defpos_symm_matrix(A, cond_numb, N);
+      fill_source(b, 2., 0.5, N);
+      
+      conj_grad_alg(A, sol, b, r_hat, N, &n_iter);
+      
+      fprintf(conj, "%lg\t%d\n", cond_numb, n_iter);
+      
+    }
   }
+  
   free(A);
   free(b);
   free(sol);
