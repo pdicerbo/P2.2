@@ -40,10 +40,10 @@ void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_it
     r_hat_square = vector_prod(r, r, N);
     r_hat_square /= vector_prod(b, b, N);
     (*n_iter)++;
+    free(t);
   }
 
   /* deallocate pointers */
-  free(t);
   free(r);  
 }
 
@@ -90,13 +90,13 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
     }
     r_hat_square = vector_prod(r_old, r_old, N);
     r_hat_square /= vector_prod(b, b, N);
+    free(t);
 
     (*n_iter)++;
   }
 
   free(r);
   free(p);
-  free(t);
   free(r_old);
 }
 
