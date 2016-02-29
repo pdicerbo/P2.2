@@ -43,7 +43,7 @@ int main(int argc, char** argv){
   free(check_sol);
   
   printf("\n\n\tCONJUGATE GRADIENT ALGORITHM\n");
-
+  
   conj_grad_alg(A, sol, b, r_hat, N, &n_iter);
 
   check_sol = mat_vec_prod(A, sol, N);
