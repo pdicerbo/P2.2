@@ -24,6 +24,8 @@ void random_init(int seed)
 #endif
 }
 
+extern "C"
+{
 //generate a number distributed uniformly over the range [min,max)
 double get_unif_double(double min,double max)
 {
@@ -137,4 +139,5 @@ void fill_gauss_matrix(double *m,double ave,double sigma,int n)
   for(int i=0;i<n;i++)
     for(int j=0;j<n;j++)
       m[i*n+j]=get_gauss_double(ave,sigma);
+}
 }
