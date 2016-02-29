@@ -51,12 +51,24 @@ int main(int argc, char** argv){
   
   if(abs(check_sol[0] - sol[0]) < r_hat && abs(check_sol[1] - sol[1]) < r_hat){
     printf("\n\tCONJUGATE GRADIENT ALGORITHM");
-    printf("\n\n\tTEST PASSED!");
+    printf("\n\n\tTEST 1 PASSED!");
   }
   else{
-    printf("\n\tGRADIENT ALGORITHM");
-    printf("\n\n\tTEST NOT PASSED\n");
+    printf("\n\tCONJUGATE GRADIENT ALGORITHM");
+    printf("\n\n\tTEST 1 NOT PASSED\n");
     printf("\tdifference on x = %lg; difference on y = %lg", check_sol[0] - sol[0], check_sol[1] - sol[1]);
+  }
+
+  printf("\n\n\n");
+
+  if(n_iter == N){
+    printf("\n\tCONJUGATE GRADIENT ALGORITHM");
+    printf("\n\n\tTEST 2 PASSED!");
+  }
+  else{
+    printf("\n\tCONJUGATE GRADIENT ALGORITHM");
+    printf("\n\n\tTEST 2 NOT PASSED\n");
+    printf("\tThe number of iteration should be %d instead of %d", N, n_iter);
   }
 
   printf("\n\n\n");
