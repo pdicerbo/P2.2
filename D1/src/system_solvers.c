@@ -3,13 +3,14 @@
 #include "../include/system_solvers.h"
 
 /* Perform the GRADIENT ALGORITHM to obtain */
-/* the solution of the system "A x = b" */
+/* the solution of the system "A x = b" with relative error "prec"*/
 /* This function store the result into array x */
+/* The number of iterations is stored into n_iter */
 void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){
 
   double* r; /* residue error */
   double* t; /* array in which store A r_(k - 1) */
-  double r_hat, alpha;
+  double r_hat_square, alpha;
   int j;
 
   r = (double*) malloc(N * sizeof(double));
@@ -20,10 +21,11 @@ void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_it
   }
 
   *n_iter = 0;
-  r_hat = vector_prod(r, r, N);
-  r_hat /= vector_prod(b, b, N);
+  r_hat_square = vector_prod(r, r, N);
+  r_hat_square /= vector_prod(b, b, N);
 
-  while(r_hat > prec){
+  /* avoid the square root calculation in the condition within the while */
+  while(r_hat_square > prec * prec){
     t = mat_vec_prod(A, r, N);
     alpha = vector_prod(r, r, N);
     alpha /= vector_prod(r, t, N);
@@ -35,14 +37,67 @@ void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_it
 
 
     /* perform the calculation of the following relative error */
-    r_hat = vector_prod(r, r, N);
-    r_hat /= vector_prod(b, b, N);
+    r_hat_square = vector_prod(r, r, N);
+    r_hat_square /= vector_prod(b, b, N);
     (*n_iter)++;
   }
 
+  /* deallocate pointers */
   free(t);
-  free(r);
+  free(r);  
+}
+
+/* Perform the CONJUGATE GRADIENT ALGORITHM to obtain */
+/* the solution of the system "A x = b" with relative error "prec"*/
+/* This function store the result into array x */
+/* The number of iterations is stored into n_iter */
+void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){
+
+  int j;
+  double *r = (double*) malloc(N * sizeof(double));
+  double *p = (double*) malloc(N * sizeof(double));
+  double *t;
+  double *r_old = (double*) malloc(N * sizeof(double));
+  double r_hat_square, alpha, beta;
   
+  /* arrays initialization */
+  for(j = 0; j < N; j++){
+    x[j] = 0.;
+    r_old[j] = b[j];
+    p[j] = b[j];
+  }
+
+  *n_iter = 0;
+  r_hat_square = vector_prod(r_old, r_old, N);
+  r_hat_square /= vector_prod(b, b, N);
+
+  while(r_hat_square > prec * prec){
+    t = mat_vec_prod(A, p, N);
+    alpha = vector_prod(r_old, r_old, N);
+    alpha /= vector_prod(p, t, N);
+
+    for(j = 0; j < N; j++){
+      x[j] += alpha * p[j];
+      r[j] = r_old[j] - alpha * t[j];
+    }
+
+    beta = vector_prod(r, r, N);
+    beta /= vector_prod(r_old, r_old, N);
+
+    for(j = 0; j < N; j++){
+      p[j] = r[j] + beta * p[j];
+      r_old[j] = r[j];
+    }
+    r_hat_square = vector_prod(r_old, r_old, N);
+    r_hat_square /= vector_prod(b, b, N);
+
+    (*n_iter)++;
+  }
+
+  free(r);
+  free(p);
+  free(t);
+  free(r_old);
 }
 
 /* Perform the product between two vector of length N */
