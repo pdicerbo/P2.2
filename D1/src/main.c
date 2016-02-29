@@ -9,7 +9,7 @@ int main(int argc, char** argv){
   double* b;
   double* sol;
   double* check_sol;
-  double r_hat = 1.e-10, cond_numb = 1.e6; // 1.e5
+  double r_hat = 1.e-10, cond_numb = 1.e6;
   FILE* conj;
   
   int N = 2, n_iter, n_rep = 10, j;
@@ -100,12 +100,24 @@ int main(int argc, char** argv){
       
     }
   }
-  
+
+  fclose(conj);
+
+  printf("\n\tstarting MINIMIZATION CHECK\n");
+  N = 150;
+  cond_numb = 10000;
+  r_hat = 1.e-3;
+  A = (double*) malloc(N * N * sizeof(double));
+  b = (double*) malloc(N * sizeof(double));
+  sol = (double*) malloc(N * sizeof(double));
+  fill_defpos_symm_matrix(A, cond_numb, N);
+  fill_source(b, 2., 0.5, N);
+
+  minimization_check(A, sol, b, r_hat, N, &n_iter);
+  printf("\n\tDONE\n\n");
   free(A);
   free(b);
   free(sol);
-
-  fclose(conj);
 
   return 0;
 }

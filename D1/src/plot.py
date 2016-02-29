@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 nfiles = ["../results/first_scaling.dat", "../results/sec_scaling.dat"]
-# nfiles = ["../first_scaling.dat", "../sec_scaling.dat"]
 rep = 10     # number of repetition per measure
 
 for namef in nfiles:
@@ -54,7 +53,6 @@ for namef in nfiles:
         plt.title('Scaling obtained with $\hat{r}_{targ} = 10^{-10}$ and $CondNumb = 10^6$')
         plt.xlabel('Matrix Size')
         plt.ylabel('N_Iter')
-        # plt.legend(bbox_to_anchor = (.37, 1.))
         plt.savefig("../results/first_scaling.png")
         plt.close('all')
 
@@ -64,6 +62,24 @@ for namef in nfiles:
         plt.title('Scaling obtained with $\hat{r}_{targ} = 10^{-10}$ Matrix Size = 500')
         plt.xlabel('Condition Number')
         plt.ylabel('N_Iter')
-        # plt.legend(bbox_to_anchor = (.37, 1.))
         plt.savefig("../results/second_scaling.png")
         plt.close('all')
+
+# MINIMIZATION CHECK PLOT
+
+min_files = ["../results/min_check_grad.dat", "../results/min_check_conj.dat"]
+
+plt.figure()
+
+for nfile in min_files:
+    data = np.loadtxt(nfile)
+    n_iter = data[:,0]
+    Fx = data[:,1]
+    plt.semilogx(n_iter, Fx, label = nfile[21:-4])
+    
+plt.title("Minimization Check\nObtained fixing Matrix Size = 150, CondNumb = $10^5$ and $\hat{r} = 10^{-3}$")
+plt.xlabel("N_Iter")
+plt.ylabel("F(x)")
+plt.legend()
+# plt.show()
+plt.savefig("../results/min_check.png")

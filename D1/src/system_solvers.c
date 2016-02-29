@@ -35,8 +35,7 @@ void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_it
       r[j] -= alpha * t[j];
     }
 
-
-    /* perform the calculation of the following relative error */
+    /* perform the calculation of the new relative error */
     r_hat_square = vector_prod(r, r, N);
     r_hat_square /= vector_prod(b, b, N);
     (*n_iter)++;
@@ -128,4 +127,113 @@ double* mat_vec_prod(double* A, double* x, int N){
       ret[i] += A[i*N + j] * x[j];
 
   return ret;
+}
+
+void minimization_check(double* A, double* x, double* b, double prec, int N, int* n_iter){
+
+  double* r; /* residue error */
+  double* t; /* array in which store A r_(k - 1) */
+  double* tmp;
+  double *r_old;
+  double *p;
+  double r_hat_square, alpha, beta, Fx;
+  int j;
+  FILE* min_check;
+
+  r = (double*) malloc(N * sizeof(double));
+
+  for(j = 0; j < N; j++){
+    x[j] = 0.;
+    r[j] = b[j];
+  }
+
+  *n_iter = 0;
+  r_hat_square = vector_prod(r, r, N);
+  r_hat_square /= vector_prod(b, b, N);
+
+  min_check = fopen("results/min_check_grad.dat", "w");
+  
+  /* avoid the square root calculation in the condition within the while */
+  while(r_hat_square > prec * prec){
+    t = mat_vec_prod(A, r, N);
+    alpha = vector_prod(r, r, N);
+    alpha /= vector_prod(r, t, N);
+
+    for(j = 0; j < N; j++){
+      x[j] += alpha * r[j];
+      r[j] -= alpha * t[j];
+    }
+      
+    /* perform the calculation of the new relative error */
+    r_hat_square = vector_prod(r, r, N);
+    r_hat_square /= vector_prod(b, b, N);
+    (*n_iter)++;
+
+    /* calculation of F(x) = 0.5 * x^T A x - b x */
+    tmp = mat_vec_prod(A, x, N);
+    Fx = 0.5 * vector_prod(x, tmp, N);
+    Fx -= vector_prod(b, x, N);
+
+    fprintf(min_check, "%d\t%lg\n", *n_iter, Fx);
+    
+    free(t);
+    free(tmp);
+  }
+
+  fclose(min_check);
+
+  /* Second check */
+  p = (double*) malloc(N * sizeof(double));
+  r_old = (double*) malloc(N * sizeof(double));
+
+  min_check = fopen("results/min_check_conj.dat", "w");
+  
+  /* arrays initialization */
+  for(j = 0; j < N; j++){
+    x[j] = 0.;
+    r_old[j] = b[j];
+    p[j] = b[j];
+  }
+
+  *n_iter = 0;
+  r_hat_square = vector_prod(r_old, r_old, N);
+  r_hat_square /= vector_prod(b, b, N);
+
+  while(r_hat_square > prec * prec){
+    t = mat_vec_prod(A, p, N);
+    alpha = vector_prod(r_old, r_old, N);
+    alpha /= vector_prod(p, t, N);
+
+    for(j = 0; j < N; j++){
+      x[j] += alpha * p[j];
+      r[j] = r_old[j] - alpha * t[j];
+    }
+
+    beta = vector_prod(r, r, N);
+    beta /= vector_prod(r_old, r_old, N);
+
+    for(j = 0; j < N; j++){
+      p[j] = r[j] + beta * p[j];
+      r_old[j] = r[j];
+    }
+    r_hat_square = vector_prod(r_old, r_old, N);
+    r_hat_square /= vector_prod(b, b, N);
+
+    (*n_iter)++;
+    /* calculation of F(x) = 0.5 * x^T A x - b x */
+    tmp = mat_vec_prod(A, x, N);
+    Fx = 0.5 * vector_prod(x, tmp, N);
+    Fx -= vector_prod(b, x, N);
+
+    fprintf(min_check, "%d\t%lg\n", *n_iter, Fx);
+    
+    free(t);
+    free(tmp);
+  }
+  
+  fclose(min_check);
+
+  free(r);
+  free(p);
+  free(r_old);
 }
