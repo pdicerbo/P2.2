@@ -51,6 +51,13 @@ int main(){
   for(j = 0; j < L; j++)
     printf("\t%lg\t\t%lg\n", f[j], check_sol[j]);
   
+  sparse_conj_grad_alg(M, f, b, r_hat, L, &n_it);
+
+  printf("\n\tSp solution:    Check_sol:\n");
+  
+  for(j = 0; j < L; j++)
+    printf("\t%lg\t\t%lg\n", f[j], check_sol[j]);
+
   free(M);
   free(f);
   free(b);

@@ -100,6 +100,60 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
   free(r_old);
 }
 
+/* Perform the CONJUGATE GRADIENT ALGORITHM with the **sparse_prod** function to obtain */
+/* the solution of the system "A x = b" with relative error "prec"*/
+/* This function store the result into array x */
+/* The number of iterations is stored into n_iter */
+void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){
+
+  int j;
+  double *r = (double*) malloc(N * sizeof(double));
+  double *p = (double*) malloc(N * sizeof(double));
+  double *t;
+  double *r_old = (double*) malloc(N * sizeof(double));
+  double r_hat_square, alpha, beta;
+  
+  /* arrays initialization */
+  for(j = 0; j < N; j++){
+    x[j] = 0.;
+    r_old[j] = b[j];
+    p[j] = b[j];
+  }
+
+  *n_iter = 0;
+  r_hat_square = vector_prod(r_old, r_old, N);
+  r_hat_square /= vector_prod(b, b, N);
+
+  while(r_hat_square > prec * prec){
+    /* t = mat_vec_prod(A, p, N); */
+    t = sparse_prod(A, p, N);
+    alpha = vector_prod(r_old, r_old, N);
+    alpha /= vector_prod(p, t, N);
+
+    for(j = 0; j < N; j++){
+      x[j] += alpha * p[j];
+      r[j] = r_old[j] - alpha * t[j];
+    }
+
+    beta = vector_prod(r, r, N);
+    beta /= vector_prod(r_old, r_old, N);
+
+    for(j = 0; j < N; j++){
+      p[j] = r[j] + beta * p[j];
+      r_old[j] = r[j];
+    }
+    r_hat_square = vector_prod(r_old, r_old, N);
+    r_hat_square /= vector_prod(b, b, N);
+    free(t);
+
+    (*n_iter)++;
+  }
+
+  free(r);
+  free(p);
+  free(r_old);
+}
+
 /* Perform the product between two vector of length N */
 /* in this way: (x,y) = \sum_i x_i y_i */
 double vector_prod(double* x, double* y, int N){
@@ -126,6 +180,24 @@ double* mat_vec_prod(double* A, double* x, int N){
   for(i = 0; i < N; i++)
     for(j = 0; j < N; j++)
       ret[i] += A[i*N + j] * x[j];
+
+  return ret;
+}
+
+double* sparse_prod(double* A, double* x, int N){
+  double* ret = (double*) calloc(N, sizeof(double));
+  int i, j, offset = 0;
+
+  ret[0] = A[0] * x[0] + A[1] * x[1] + A[N - 1] * x[N - 1];
+  
+  for(i = 1; i < N - 1; i++){
+    for(j = 0; j < 3; j++){
+      ret[i] += A[j + offset + i*N] * x[j +  offset];
+    }
+    offset++;
+  }
+
+  ret[N - 1] = A[N * (N - 1)] * x[0] + A[N * N - 2] * x[N - 2] + A[N * N - 1] * x[N - 1];
 
   return ret;
 }
