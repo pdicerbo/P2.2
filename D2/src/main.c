@@ -10,9 +10,9 @@ int main(int argc, char** argv){
   double* sol;
   double* check_sol;
   double r_hat = 1.e-10, cond_numb = 1.e6;
-  FILE* conj;
+  /* FILE* conj; */
   
-  int N = 2, n_iter, n_rep = 10, j;
+  int N = 2, n_iter; //, n_rep = 10, j;
   
   A = (double*) malloc(N * N * sizeof(double));
   b = (double*) malloc(N * sizeof(double));
@@ -58,62 +58,62 @@ int main(int argc, char** argv){
   free(check_sol);
 
   /* condition number scaling */
-  conj = fopen("results/first_scaling.dat", "w");
+  /* conj = fopen("results/first_scaling.dat", "w"); */
 
-  for(j = 0; j < n_rep; j++){
-    for(N = 10; N < 501; N += 10){
-      A = (double*) malloc(N * N * sizeof(double));
-      b = (double*) malloc(N * sizeof(double));
-      sol = (double*) malloc(N * sizeof(double));
+  /* for(j = 0; j < n_rep; j++){ */
+  /*   for(N = 10; N < 501; N += 10){ */
+  /*     A = (double*) malloc(N * N * sizeof(double)); */
+  /*     b = (double*) malloc(N * sizeof(double)); */
+  /*     sol = (double*) malloc(N * sizeof(double)); */
       
-      fill_defpos_symm_matrix(A, cond_numb, N);
-      fill_source(b, 2., 0.5, N);
+  /*     fill_defpos_symm_matrix(A, cond_numb, N); */
+  /*     fill_source(b, 2., 0.5, N); */
       
-      conj_grad_alg(A, sol, b, r_hat, N, &n_iter);
+  /*     conj_grad_alg(A, sol, b, r_hat, N, &n_iter); */
       
-      fprintf(conj, "%d\t%d\n", N, n_iter);
+  /*     fprintf(conj, "%d\t%d\n", N, n_iter); */
       
-      free(A);
-      free(b);
-      free(sol);
-    }
-  }
+  /*     free(A); */
+  /*     free(b); */
+  /*     free(sol); */
+  /*   } */
+  /* } */
 
-  fclose(conj);
+  /* fclose(conj); */
 
-  N = 500;
-  A = (double*) malloc(N * N * sizeof(double));
-  b = (double*) malloc(N * sizeof(double));
-  sol = (double*) malloc(N * sizeof(double));
+  /* N = 500; */
+  /* A = (double*) malloc(N * N * sizeof(double)); */
+  /* b = (double*) malloc(N * sizeof(double)); */
+  /* sol = (double*) malloc(N * sizeof(double)); */
   
-  conj = fopen("results/sec_scaling.dat", "w");
+  /* conj = fopen("results/sec_scaling.dat", "w"); */
 
-  for(j = 0; j < n_rep; j++){
-    for(cond_numb = 1250; cond_numb < 62501; cond_numb += 1250){
+  /* for(j = 0; j < n_rep; j++){ */
+  /*   for(cond_numb = 1250; cond_numb < 62501; cond_numb += 1250){ */
       
-      fill_defpos_symm_matrix(A, cond_numb, N);
-      fill_source(b, 2., 0.5, N);
+  /*     fill_defpos_symm_matrix(A, cond_numb, N); */
+  /*     fill_source(b, 2., 0.5, N); */
       
-      conj_grad_alg(A, sol, b, r_hat, N, &n_iter);
+  /*     conj_grad_alg(A, sol, b, r_hat, N, &n_iter); */
       
-      fprintf(conj, "%lg\t%d\n", cond_numb, n_iter);
+  /*     fprintf(conj, "%lg\t%d\n", cond_numb, n_iter); */
       
-    }
-  }
+  /*   } */
+  /* } */
 
-  fclose(conj);
+  /* fclose(conj); */
 
-  printf("\n\tstarting MINIMIZATION CHECK\n");
+  printf("\n\tstarting INNER CHECKS\n");
   N = 150;
   cond_numb = 10000;
-  r_hat = 1.e-3;
+  r_hat = 1.e-28;
   A = (double*) malloc(N * N * sizeof(double));
   b = (double*) malloc(N * sizeof(double));
   sol = (double*) malloc(N * sizeof(double));
   fill_defpos_symm_matrix(A, cond_numb, N);
   fill_source(b, 2., 0.5, N);
 
-  minimization_check(A, sol, b, r_hat, N, &n_iter);
+  inner_checks(A, sol, b, r_hat, N, &n_iter);
   printf("\n\tDONE\n\n");
   free(A);
   free(b);

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 #include "../include/system_solvers.h"
 
 /* Perform the GRADIENT ALGORITHM to obtain */
@@ -129,64 +130,27 @@ double* mat_vec_prod(double* A, double* x, int N){
   return ret;
 }
 
-void minimization_check(double* A, double* x, double* b, double prec, int N, int* n_iter){
+void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_iter){
 
   double* r; /* residue error */
+  double* r_explicit;
   double* t; /* array in which store A r_(k - 1) */
   double* tmp;
   double *r_old;
   double *p;
   double r_hat_square, alpha, beta, Fx;
+  double r_e;
   int j;
   FILE* min_check;
+  FILE* explicit;
 
   r = (double*) malloc(N * sizeof(double));
-
-  for(j = 0; j < N; j++){
-    x[j] = 0.;
-    r[j] = b[j];
-  }
-
-  *n_iter = 0;
-  r_hat_square = vector_prod(r, r, N);
-  r_hat_square /= vector_prod(b, b, N);
-
-  min_check = fopen("results/min_check_grad.dat", "w");
-  
-  /* avoid the square root calculation in the condition within the while */
-  while(r_hat_square > prec * prec){
-    t = mat_vec_prod(A, r, N);
-    alpha = vector_prod(r, r, N);
-    alpha /= vector_prod(r, t, N);
-
-    for(j = 0; j < N; j++){
-      x[j] += alpha * r[j];
-      r[j] -= alpha * t[j];
-    }
-      
-    /* perform the calculation of the new relative error */
-    r_hat_square = vector_prod(r, r, N);
-    r_hat_square /= vector_prod(b, b, N);
-    (*n_iter)++;
-
-    /* calculation of F(x) = 0.5 * x^T A x - b x */
-    tmp = mat_vec_prod(A, x, N);
-    Fx = 0.5 * vector_prod(x, tmp, N);
-    Fx -= vector_prod(b, x, N);
-
-    fprintf(min_check, "%d\t%lg\n", *n_iter, Fx);
-    
-    free(t);
-    free(tmp);
-  }
-
-  fclose(min_check);
-
-  /* Second check */
   p = (double*) malloc(N * sizeof(double));
   r_old = (double*) malloc(N * sizeof(double));
-
+  r_explicit = (double*) malloc(N * sizeof(double));
+  
   min_check = fopen("results/min_check_conj.dat", "w");
+  explicit = fopen("results/explicit_res.dat", "w");
   
   /* arrays initialization */
   for(j = 0; j < N; j++){
@@ -220,20 +184,36 @@ void minimization_check(double* A, double* x, double* b, double prec, int N, int
     r_hat_square /= vector_prod(b, b, N);
 
     (*n_iter)++;
+
     /* calculation of F(x) = 0.5 * x^T A x - b x */
     tmp = mat_vec_prod(A, x, N);
     Fx = 0.5 * vector_prod(x, tmp, N);
     Fx -= vector_prod(b, x, N);
 
     fprintf(min_check, "%d\t%lg\n", *n_iter, Fx);
+    free(t);
+    
+    /* calculation of explicit residue */
+    t = mat_vec_prod(A, x, N);
+
+    // Storing in r_explicit directly the differenece between r_expl and r_impl 
+    for(j = 0; j < N; j++)
+      r_explicit[j] = b[j] - t[j];
+
+    // Compute the modulus of the r_explicit vector and store it
+    r_e = pow(vector_prod(r_explicit, r_explicit, N), 0.5);
+
+fprintf(explicit, "%d\t%lg\t%lg\n", *n_iter, r_e, pow(vector_prod(r, r, N), 0.5));
     
     free(t);
     free(tmp);
   }
   
   fclose(min_check);
-
+  fclose(explicit);
+  
   free(r);
   free(p);
   free(r_old);
+  free(r_explicit);
 }
