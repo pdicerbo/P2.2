@@ -7,11 +7,11 @@
 
 int main(){
 
-  double *M, *f, *b, *check_sol;
+  double *M, *f, *b, *check_sol, *eigenv;
   double r_hat = 1.e-15;
   double sigma = 0.6, D = 1., s = -0.5;
   double t_start, t_end;
-  int i, j, n_it, n_rep = 1000;
+  int i, j, n_it, n_rep = 10; //00;
   int L, L_start = 10, L_end = 5e2, L_step = 50;
   FILE* classic;
   FILE* sparse;
@@ -131,5 +131,18 @@ int main(){
   
   fclose(sparse);
 
+  /* CHECK CONDITION NUMBER */
+  L = 6;
+  eigenv = (double*) malloc(L * sizeof(double));
+  
+  compute_eigenvalues(eigenv, sigma, L);
+
+  printf("\n\tPrinting the eigenvalues for matrix with size %d and sigma = %lg\n\n", L, sigma);
+  for(j = 0; j < L; j++)
+    printf("\t%lg\n", eigenv[j]);
+
+  printf("\n");
+  free(eigenv);
+  
   return 0;
 }

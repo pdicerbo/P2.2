@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <math.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -32,4 +33,12 @@ double seconds(){
   gettimeofday( &tmp, (struct timezone *)0 );
   sec = tmp.tv_sec + ((double)tmp.tv_usec)/1000000.0;
   return sec;
+}
+
+void compute_eigenvalues(double* eigenv, double sigma, int L){
+  int j;
+
+  for(j = 0; j < L; j++)
+    eigenv[j] = sigma + 1. - cos(2. * 3.14 * j / L);
+  
 }

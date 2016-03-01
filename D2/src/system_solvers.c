@@ -7,6 +7,7 @@
 /* the solution of the system "A x = b" with relative error "prec"*/
 /* This function store the result into array x */
 /* The number of iterations is stored into n_iter */
+/* the found solution is stored in x */
 void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){
 
   double* r; /* residue error */
@@ -51,6 +52,7 @@ void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_it
 /* the solution of the system "A x = b" with relative error "prec"*/
 /* This function store the result into array x */
 /* The number of iterations is stored into n_iter */
+/* the found solution is stored in x */
 void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){
 
   int j;
@@ -104,6 +106,7 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
 /* the solution of the system "A x = b" with relative error "prec"*/
 /* This function store the result into array x */
 /* The number of iterations is stored into n_iter */
+/* the found solution is stored in x */
 void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){
 
   int j;
@@ -125,7 +128,6 @@ void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, i
   r_hat_square /= vector_prod(b, b, N);
 
   while(r_hat_square > prec * prec){
-    /* t = mat_vec_prod(A, p, N); */
     t = sparse_prod(A, p, N);
     alpha = vector_prod(r_old, r_old, N);
     alpha /= vector_prod(p, t, N);
@@ -184,10 +186,13 @@ double* mat_vec_prod(double* A, double* x, int N){
   return ret;
 }
 
+/* Perform the product between a matrix and a vector */
+/* taking into account that the matrix is sparse */
 double* sparse_prod(double* A, double* x, int N){
   double* ret = (double*) calloc(N, sizeof(double));
   int i, j, offset = 0;
 
+  /* first and last entry of the vector are computed "by hand" */
   ret[0] = A[0] * x[0] + A[1] * x[1] + A[N - 1] * x[N - 1];
   
   for(i = 1; i < N - 1; i++){
@@ -202,7 +207,7 @@ double* sparse_prod(double* A, double* x, int N){
   return ret;
 }
 
-/* This function perform some inner checks. The first is the calculation */
+/* This function perform "inner" checks. The first is the calculation */
 /* of the minimization of the functional (the last optional step of the D1 assignment). */
 /* The second is the calculation of the explicit error in the conjugate gradient algorithm */
 /* as required in the D2 assignment. Do **make x** and **make plot** into **D2** directory */
