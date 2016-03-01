@@ -8,6 +8,10 @@ test:
 
 plot:
 	python src/plot.py
+
+x: main
+	./main.x
+
 clean:
 	$(MAKE) -C src clean
 	$(MAKE) -C test clean

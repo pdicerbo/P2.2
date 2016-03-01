@@ -130,6 +130,11 @@ double* mat_vec_prod(double* A, double* x, int N){
   return ret;
 }
 
+/* This function perform some inner checks. The first is the calculation */
+/* of the minimization of the functional (the last optional step of the D1 assignment). */
+/* The second is the calculation of the explicit error in the conjugate gradient algorithm */
+/* as required in the D2 assignment. Do **make x** and **make plot** into **D2** directory */
+/* will produces the rispective plots in the **results** folder */
 void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_iter){
 
   double* r; /* residue error */
@@ -139,7 +144,7 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
   double *r_old;
   double *p;
   double r_hat_square, alpha, beta, Fx;
-  double r_e;
+  double r_e, mod_b_square;
   int j;
   FILE* min_check;
   FILE* explicit;
@@ -158,10 +163,11 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
     r_old[j] = b[j];
     p[j] = b[j];
   }
-
+  mod_b_square = vector_prod(b, b, N);
+  
   *n_iter = 0;
   r_hat_square = vector_prod(r_old, r_old, N);
-  r_hat_square /= vector_prod(b, b, N);
+  r_hat_square /= mod_b_square;
 
   while(r_hat_square > prec * prec){
     t = mat_vec_prod(A, p, N);
@@ -181,7 +187,7 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
       r_old[j] = r[j];
     }
     r_hat_square = vector_prod(r_old, r_old, N);
-    r_hat_square /= vector_prod(b, b, N);
+    r_hat_square /= mod_b_square; //vector_prod(b, b, N);
 
     (*n_iter)++;
 
@@ -201,9 +207,9 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
       r_explicit[j] = b[j] - t[j];
 
     // Compute the modulus of the r_explicit vector and store it
-    r_e = pow(vector_prod(r_explicit, r_explicit, N), 0.5);
+    r_e = pow(vector_prod(r_explicit, r_explicit, N) / mod_b_square, 0.5);
 
-fprintf(explicit, "%d\t%lg\t%lg\n", *n_iter, r_e, pow(vector_prod(r, r, N), 0.5));
+    fprintf(explicit, "%d\t%lg\t%lg\n", *n_iter, r_e, pow(vector_prod(r, r, N) / mod_b_square, 0.5));
     
     free(t);
     free(tmp);
