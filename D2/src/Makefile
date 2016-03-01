@@ -15,7 +15,7 @@ default: ../laplace.x
 ../main.x : $(OBJ) $(MY_LIBS)
 	$(CXX) -o $@ $(LIBS) $^
 
-../laplace.x : laplace.o #$(OBJ) $(MY_LIBS)
+../laplace.x : laplace.o $(MY_LIBS)
 	$(CXX) -o $@ $(LIBS) $^
 
 laplace.o: laplace.c

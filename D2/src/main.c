@@ -10,9 +10,8 @@ int main(int argc, char** argv){
   double* sol;
   double* check_sol;
   double r_hat = 1.e-10, cond_numb = 1.e6;
-  /* FILE* conj; */
   
-  int N = 2, n_iter; //, n_rep = 10, j;
+  int N = 2, n_iter;
   
   A = (double*) malloc(N * N * sizeof(double));
   b = (double*) malloc(N * sizeof(double));
