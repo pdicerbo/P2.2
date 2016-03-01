@@ -5,7 +5,7 @@ This folder contains the results of the day-1 assignment of the P2.2 course.
 
 In **D1** folder:
 
-- Do **make** will produce the executable **main.x** that aims to answer at all the questions in the assignment.
+- Do **make** will produce the executable **main.x** that aims to fulfil all the questions in the assignment.
 
 - Do **make test** will run some tests following the instructions within test/test.c.
 
