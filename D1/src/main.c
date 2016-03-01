@@ -89,7 +89,7 @@ int main(int argc, char** argv){
   conj = fopen("results/sec_scaling.dat", "w");
 
   for(j = 0; j < n_rep; j++){
-    for(cond_numb = 10; cond_numb < 501; cond_numb += 10){
+    for(cond_numb = 1250; cond_numb < 62501; cond_numb += 1250){
       
       fill_defpos_symm_matrix(A, cond_numb, N);
       fill_source(b, 2., 0.5, N);
