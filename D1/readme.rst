@@ -14,7 +14,8 @@ In the **src** folder there are the sources files subdivided in the following wa
 
 - **plot.py** is a Python script that produces the required plots (saved in **results** folder).
 
-In **D1** folder, do **make** will produce the executable **main.x** that aims to answer at all the questions in the assignment.
-Do **make test** will run some tests following the instructions within test/test.c.
-Do **make plot** will run the **src/plot.py** script that produces the required plots and store it in **results** folder.
-Do **make clean** will clean the produced files.
+In **D1** folder:
+- Do **make** will produce the executable **main.x** that aims to answer at all the questions in the assignment.
+- Do **make test** will run some tests following the instructions within test/test.c.
+- Do **make plot** will run the **src/plot.py** script that produces the required plots and store it in **results** folder.
+- Do **make clean** will clean the produced files.
