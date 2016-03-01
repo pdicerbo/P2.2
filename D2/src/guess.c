@@ -15,7 +15,6 @@ int main(int argc, char** argv){
   A = (double*) malloc(N * N * sizeof(double));
   b = (double*) malloc(N * sizeof(double));
   sol = (double*) malloc(N * sizeof(double));
-  check_sol = (double*) malloc(N * sizeof(double));
   guess = (double*) malloc(N * sizeof(double));
   A_shift = (double*) malloc(N * N * sizeof(double));
   
@@ -52,6 +51,13 @@ int main(int argc, char** argv){
     printf("\n\tThe found solution is wrong\n");
 
   printf("\n");
-  
+
+  free(A);
+  free(A_shift);
+  free(b);
+  free(sol);
+  free(check_sol);
+  free(guess);
+
   return 0;
 }
