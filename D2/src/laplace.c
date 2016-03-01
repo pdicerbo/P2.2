@@ -34,23 +34,44 @@ int main(){
 
   printf("\n\tMy solution:    Check_sol:\n");
 
-  for(j = 0; j < L; j++)
+  i = 0;
+  for(j = 0; j < L; j++){
     printf("\t%lg\t\t%lg\n", f[j], check_sol[j]);
+    if(abs(f[j] - check_sol[j]) > 1.e10)
+      i = 1;
+  }
 
+  if(i == 0)
+    printf("\n\tThe found solution is correct\n");
+  else
+    printf("\n\tThe found solution is wrong\n");
+  
   sparse_conj_grad_alg(M, f, b, r_hat, L, &n_it);
 
-  printf("\n\tSp solution:    Check_sol:\n");
+  printf("\n\tSparse solution:  Check_sol:\n");
+  i = 0;
 
-  for(j = 0; j < L; j++)
-    printf("\t%lg\t\t%lg\n", f[j], check_sol[j]);
+  for(j = 0; j < L; j++){
+    printf("\t%lg\t\t  %lg\n", f[j], check_sol[j]);
+    if(abs(f[j] - check_sol[j]) > 1.e14)
+      i = 1;
+  }
+
+  if(i == 0)
+    printf("\n\tThe found solution is correct\n");
+  else
+    printf("\n\tThe found solution is wrong\n");
   
   free(M);
   free(f);
   free(b);
   free(check_sol);
-
-  classic = fopen("results/classic_timing.dat", "w");
   
+  fprintf(stderr, "\n\tTIMING SECTION\n");
+  fprintf(stderr, "\tperform %d repetition for each matrix size\n\n", n_rep);
+  
+  classic = fopen("results/classic_timing.dat", "w");
+  fprintf(stderr, "\tSIZE\ttime (s)\n\n", L, t_end - t_start);
   for(L = L_start; L < L_end; L += L_step){
     M = (double*) malloc(L * L * sizeof(double));
     f = (double*) malloc(L * sizeof(double));
@@ -70,6 +91,7 @@ int main(){
     t_end = seconds();
 
     fprintf(classic, "%d\t%lg\n", L, t_end - t_start);
+    fprintf(stderr, "\t%d\t%lg\n", L, t_end - t_start);
     
     free(M);
     free(f);
@@ -79,6 +101,7 @@ int main(){
   fclose(classic);
 
   /* Timing of the "sparse" optimized function */
+  fprintf(stderr, "\n\tsparse section\n\n");
   sparse = fopen("results/sparse_timing.dat", "w");
 
   for(L = L_start; L < L_end; L += L_step){
@@ -99,6 +122,7 @@ int main(){
     t_end = seconds();
 
     fprintf(sparse, "%d\t%lg\n", L, t_end - t_start);
+    fprintf(stderr, "\t%d\t%lg\n", L, t_end - t_start);
     
     free(M);
     free(f);

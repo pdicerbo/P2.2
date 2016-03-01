@@ -9,7 +9,7 @@ int main(int argc, char** argv){
   double* b;
   double* sol;
   double* check_sol;
-  double r_hat = 1.e-10, cond_numb = 1.e6;
+  double r_hat = 1.e-28, cond_numb = 1.e6;
   
   int N = 2, n_iter;
   
