@@ -126,6 +126,8 @@ template <class T1,class T2> void inverse_laplace_operator(T1 *out,T1 *in,T2 sig
   
   //pass back to x space
   Fourier_transform(out,tilded,-1,L,V);
+  
+  delete[] tilded;
 }
 
 #endif
