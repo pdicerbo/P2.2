@@ -15,9 +15,40 @@ int main(){
   int L, L_start = 10, L_end = 5e2, L_step = 50;
   FILE* classic;
   FILE* sparse;
-  
+
+  /* First check (Point 1 of the assignment)*/
+  L = 6;
+  M = (double*) malloc(L * L * sizeof(double));
+  f = (double*) malloc(L * sizeof(double));
+  b = (double*) malloc(L * sizeof(double));
   check_sol = (double*) malloc(L * sizeof(double));
+
+  init_laplace_matrix(M, sigma, s, L);
+    
+  /* randomly filling b vector */
+  fill_source(b, 2.2, 0.5, L);
+
+  conj_grad_alg(M, f, b, r_hat, L, &n_it);
+
+  inverse_laplace_operator(check_sol, b, sigma, L, L);
+
+  printf("\n\tMy solution:    Check_sol:\n");
+
+  for(j = 0; j < L; j++)
+    printf("\t%lg\t\t%lg\n", f[j], check_sol[j]);
+
+  sparse_conj_grad_alg(M, f, b, r_hat, L, &n_it);
+
+  printf("\n\tSp solution:    Check_sol:\n");
+
+  for(j = 0; j < L; j++)
+    printf("\t%lg\t\t%lg\n", f[j], check_sol[j]);
   
+  free(M);
+  free(f);
+  free(b);
+  free(check_sol);
+
   classic = fopen("results/classic_timing.dat", "w");
   
   for(L = L_start; L < L_end; L += L_step){
@@ -76,7 +107,5 @@ int main(){
   
   fclose(sparse);
 
-  free(check_sol);
-  
   return 0;
 }
