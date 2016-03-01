@@ -11,6 +11,7 @@ plot:
 
 x: main
 	./main.x
+	./laplace.x
 
 clean:
 	$(MAKE) -C src clean

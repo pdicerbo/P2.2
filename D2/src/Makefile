@@ -10,9 +10,16 @@ OBJ = $(SRC:%.c=%.o)
 all: default
 
 default: ../main.x
+default: ../laplace.x
 
 ../main.x : $(OBJ) $(MY_LIBS)
 	$(CXX) -o $@ $(LIBS) $^
+
+../laplace.x : laplace.o #$(OBJ) $(MY_LIBS)
+	$(CXX) -o $@ $(LIBS) $^
+
+laplace.o: laplace.c
+	$(CXX) -c $^
 
 %.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $^
@@ -21,4 +28,4 @@ default: ../main.x
 	$(CC) $(CFLAGS) -c $^
 
 clean:
-	rm -rf *.o ../main.x
+	rm -rf *.o ../main.x ../laplace.x
