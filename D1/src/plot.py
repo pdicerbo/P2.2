@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-nfiles = ["results/first_scaling.dat", "results/sec_scaling.dat"]
-rep = 10     # number of repetition per measure
+# nfiles = ["results/first_scaling.dat", "results/sec_scaling.dat"]
+# notice that the main.x produces files with extension .dat, but on github I store only ".safe" copy of this files
+nfiles = ["results/first_scaling.safe", "results/sec_scaling.safe"]
+rep = 10     # number of repetition per measure, set in top of src/main.c
 
 for namef in nfiles:
     data = np.loadtxt(namef)
