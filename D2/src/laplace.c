@@ -11,7 +11,7 @@ int main(){
   double r_hat = 1.e-15;
   double sigma = 0.6, D = 1., s = -0.5;
   double t_start, t_end;
-  int i, j, n_it, n_rep = 10; //00;
+  int i, j, n_it, n_rep = 1000;
   int L, L_start = 10, L_end = 5e2, L_step = 50;
   FILE* classic;
   FILE* sparse;

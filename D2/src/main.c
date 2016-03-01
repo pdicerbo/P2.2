@@ -5,13 +5,11 @@
 
 int main(int argc, char** argv){
 
-  double* A;
-  double* b;
-  double* sol;
-  double* check_sol;
-  double r_hat = 1.e-28, cond_numb = 1.e6;
+  double *A, *b, *sol, *check_sol;
+
+  double r_hat = 1.e-8, cond_numb = 1.e5;
   
-  int N = 2, n_iter;
+  int N = 2, n_iter, i, j;
   
   A = (double*) malloc(N * N * sizeof(double));
   b = (double*) malloc(N * sizeof(double));
@@ -32,9 +30,17 @@ int main(int argc, char** argv){
 
   check_sol = mat_vec_prod(A, sol, N);
 
-  printf("\n\tsol_x = %lg, sol_y = %lg", sol[0], sol[1]);
-  printf("\n\n\tCHECH sol:\n\tcheck_x = %lg, check_y = %lg\n", check_sol[0], check_sol[1]);
-  printf("\n\tResult obtained in %d iteration", n_iter);
+  /* trivial solution control  */
+  i = 0;
+  for(j = 0; j < N; j++){
+    if(abs(sol[j] - check_sol[j]) > 1.e10)
+      i = 1;
+  }
+
+  if(i == 0)
+    printf("\n\tThe found solution is correct\n\tResult obtained in %d iteration\n", n_iter);
+  else
+    printf("\n\tThe found solution is wrong\n");
 
   free(check_sol);
   
@@ -44,12 +50,20 @@ int main(int argc, char** argv){
 
   check_sol = mat_vec_prod(A, sol, N);
 
-  printf("\n\tsol_x = %lg, sol_y = %lg", sol[0], sol[1]);
-  printf("\n\n\tCHECH sol:\n\tcheck_x = %lg, check_y = %lg\n", check_sol[0], check_sol[1]);
-  printf("\n\tResult obtained in %d iteration\n", n_iter);
+  /* trivial solution control */
+  i = 0;
+  for(j = 0; j < N; j++){
+    if(abs(sol[j] - check_sol[j]) > 1.e10)
+      i = 1;
+  }
+
+  if(i == 0)
+    printf("\n\tThe found solution is correct\n\tResult obtained in %d iteration\n", n_iter);
+  else
+    printf("\n\tThe found solution is wrong\n");
 
   printf("\n");
-  
+
   /* deallocate pointers */
   free(A);
   free(b);
@@ -69,6 +83,7 @@ int main(int argc, char** argv){
 
   inner_checks(A, sol, b, r_hat, N, &n_iter);
   printf("\n\tDONE\n\n");
+
   free(A);
   free(b);
   free(sol);

@@ -11,6 +11,7 @@ all: default
 
 default: ../main.x
 default: ../laplace.x
+default: ../guess.x
 
 ../main.x : $(OBJ) $(MY_LIBS)
 	$(CXX) -o $@ $(LIBS) $^
@@ -18,7 +19,13 @@ default: ../laplace.x
 ../laplace.x : laplace.o $(MY_LIBS)
 	$(CXX) -o $@ $(LIBS) $^
 
+../guess.x : guess.o $(MY_LIBS)
+	$(CXX) -o $@ $(LIBS) $^
+
 laplace.o: laplace.c
+	$(CXX) -c $^
+
+guess.o: guess.c
 	$(CXX) -c $^
 
 %.o: %.cpp
@@ -28,4 +35,4 @@ laplace.o: laplace.c
 	$(CC) $(CFLAGS) -c $^
 
 clean:
-	rm -rf *.o ../main.x ../laplace.x
+	rm -rf *.o ../main.x ../laplace.x ../guess.x

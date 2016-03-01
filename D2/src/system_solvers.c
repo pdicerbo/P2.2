@@ -102,6 +102,71 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
   free(r_old);
 }
 
+/* Perform the CONJUGATE GRADIENT ALGORITHM to obtain */
+/* the solution of the system "A x = b" with relative error "prec"*/
+/* This function store the result into array x */
+/* The number of iterations is stored into n_iter */
+/* the found solution is stored in x */
+void conj_guess(double* A, double* x, double* b, double* guess, double prec, int N, int* n_iter){
+
+  int j;
+  double *r = (double*) malloc(N * sizeof(double));
+  double *p = (double*) malloc(N * sizeof(double));
+  double *t;
+  double *r_old = (double*) malloc(N * sizeof(double));
+  double r_hat_square, alpha, beta, b_mod_square;
+
+  /* calculation of the A x_guess */
+  t = mat_vec_prod(A, guess, N);
+  
+  /* arrays initialization */
+  for(j = 0; j < N; j++){
+    x[j] = 0.;
+    r_old[j] = b[j] - t[j];
+    p[j] = b[j] - t[j];
+  }
+
+  free(t);
+  
+  b_mod_square = vector_prod(p, p, N);
+  
+  *n_iter = 0;
+  r_hat_square = vector_prod(r_old, r_old, N);
+  r_hat_square /= b_mod_square;
+
+  while(r_hat_square > prec * prec){
+    t = mat_vec_prod(A, p, N);
+    alpha = vector_prod(r_old, r_old, N);
+    alpha /= vector_prod(p, t, N);
+
+    for(j = 0; j < N; j++){
+      x[j] += alpha * p[j];
+      r[j] = r_old[j] - alpha * t[j];
+    }
+
+    beta = vector_prod(r, r, N);
+    beta /= vector_prod(r_old, r_old, N);
+
+    for(j = 0; j < N; j++){
+      p[j] = r[j] + beta * p[j];
+      r_old[j] = r[j];
+    }
+    r_hat_square = vector_prod(r_old, r_old, N);
+    r_hat_square /= b_mod_square;
+    free(t);
+
+    (*n_iter)++;
+  }
+
+  /* "removing" x_guess: x = x_guess + \Delta x */
+  for(j = 0; j < N; j++)
+    x[j] += guess[j];
+    
+  free(r);
+  free(p);
+  free(r_old);
+}
+
 /* Perform the CONJUGATE GRADIENT ALGORITHM with the **sparse_prod** function to obtain */
 /* the solution of the system "A x = b" with relative error "prec"*/
 /* This function store the result into array x */
