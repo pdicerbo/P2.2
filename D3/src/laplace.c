@@ -23,7 +23,6 @@ int main(int argc, char** argv){
   /* Initialization of the variables needed in the parallelized */
   /* version; each process works on a vector of size L / NumberProcessingElements */
   /* (unless there is a rest, that requires a work redistribution) */
-  
   int NPE, MyID, MyTag, vsize, rest, l_tmp, count;
   double* results_recv;
   int *displ, *recv;
@@ -56,7 +55,7 @@ int main(int argc, char** argv){
     displ[0] = 0;
 
     /* process 0 stores all the b vector in order to check */
-    /*   the correctness of the results via inverse_laplace_operator */
+    /* the correctness of the results via "inverse_laplace_operator" function */
     /* otherwais, when needed, I could also gather all the pieces from the others processes */
     fill_source(b, 2.2, 0.5, vsize);
 
@@ -76,14 +75,14 @@ int main(int argc, char** argv){
       recv[j] = l_tmp;
       displ[j] = displ[j-1]+recv[j-1]; 
     }
-    /* recycle this pointer to gather the results. */
-    /* only process 0 need b_send */
+    /* initialization of results_recv pointer need from process 0 to gather the results. */
     results_recv = (double*) malloc(vsize * sizeof(double));
   }
-  else{
+  else
+    {
     f = (double*) malloc(L * sizeof(double));
     b = (double*) malloc(L * sizeof(double));
-    /* processes with MyID != 0 receives alwais in b */
+    /* processes with MyID != 0 receives in b */
     MPI_Recv(b, L, MPI_DOUBLE, 0, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
@@ -152,12 +151,7 @@ int main(int argc, char** argv){
   
 #endif /* __MPI */
 
-#ifdef __MPI
-  
-  MPI_Finalize();
-  
-#endif /* __MPI */
-  
+  /* going to conclusion... */
   free(f);
   free(b);
 
@@ -173,6 +167,9 @@ int main(int argc, char** argv){
   
 #ifdef __MPI
   }
+  
+  MPI_Finalize();
+  
 #endif /* __MPI */
     
   return 0;
