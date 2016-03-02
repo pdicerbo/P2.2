@@ -7,16 +7,18 @@
 
 int main(){
 
-  double *M, *f, *b, *check_sol, *eigenv;
+  double *M, *f, *b, *check_sol;
   double r_hat = 1.e-15;
-  double sigma = 0.6, D = 1., s = -0.5;
-  double t_start, t_end;
-  int i, j, n_it, n_rep = 1000;
-  int L, L_start = 10, L_end = 5e2, L_step = 50;
-  FILE* classic;
-  FILE* sparse;
+  double sigma = 0.6, s = -0.5;
+  int i, j, n_it, L;
 
-  /* First check (Point 1 of the assignment)*/
+  /* double *eigenv; */
+  /* double t_start, t_end; */
+  /* int n_rep = 1000; */
+  /* int L_start = 10, L_end = 5e2, L_step = 50; */
+  /* FILE* classic; */
+  /* FILE* sparse; */
+
   L = 6;
   M = (double*) malloc(L * L * sizeof(double));
   f = (double*) malloc(L * sizeof(double));
@@ -67,82 +69,82 @@ int main(){
   free(b);
   free(check_sol);
   
-  fprintf(stderr, "\n\tTIMING SECTION\n");
-  fprintf(stderr, "\tperform %d repetition for each matrix size\n\n", n_rep);
+  /* fprintf(stderr, "\n\tTIMING SECTION\n"); */
+  /* fprintf(stderr, "\tperform %d repetition for each matrix size\n\n", n_rep); */
   
-  classic = fopen("results/classic_timing.dat", "w");
-  fprintf(stderr, "\tSIZE\ttime (s)\n\n", L, t_end - t_start);
-  for(L = L_start; L < L_end; L += L_step){
-    M = (double*) malloc(L * L * sizeof(double));
-    f = (double*) malloc(L * sizeof(double));
-    b = (double*) malloc(L * sizeof(double));
+  /* classic = fopen("results/classic_timing.dat", "w"); */
+  /* fprintf(stderr, "\tSIZE\ttime (s)\n\n", L, t_end - t_start); */
+  /* for(L = L_start; L < L_end; L += L_step){ */
+  /*   M = (double*) malloc(L * L * sizeof(double)); */
+  /*   f = (double*) malloc(L * sizeof(double)); */
+  /*   b = (double*) malloc(L * sizeof(double)); */
 
     
-    init_laplace_matrix(M, sigma, s, L);
+  /*   init_laplace_matrix(M, sigma, s, L); */
     
-    /* randomly filling b vector */
-    fill_source(b, 2.2, 0.5, L);
+  /*   /\* randomly filling b vector *\/ */
+  /*   fill_source(b, 2.2, 0.5, L); */
 
-    t_start = seconds();
+  /*   t_start = seconds(); */
 
-    for(j = 0; j < n_rep; ++j)
-      conj_grad_alg(M, f, b, r_hat, L, &n_it);
+  /*   for(j = 0; j < n_rep; ++j) */
+  /*     conj_grad_alg(M, f, b, r_hat, L, &n_it); */
 
-    t_end = seconds();
+  /*   t_end = seconds(); */
 
-    fprintf(classic, "%d\t%lg\n", L, t_end - t_start);
-    fprintf(stderr, "\t%d\t%lg\n", L, t_end - t_start);
+  /*   fprintf(classic, "%d\t%lg\n", L, t_end - t_start); */
+  /*   fprintf(stderr, "\t%d\t%lg\n", L, t_end - t_start); */
     
-    free(M);
-    free(f);
-    free(b);
-  }
+  /*   free(M); */
+  /*   free(f); */
+  /*   free(b); */
+  /* } */
   
-  fclose(classic);
+  /* fclose(classic); */
 
-  /* Timing of the "sparse" optimized function */
-  fprintf(stderr, "\n\tsparse section\n\n");
-  sparse = fopen("results/sparse_timing.dat", "w");
+  /* /\* Timing of the "sparse" optimized function *\/ */
+  /* fprintf(stderr, "\n\tsparse section\n\n"); */
+  /* sparse = fopen("results/sparse_timing.dat", "w"); */
 
-  for(L = L_start; L < L_end; L += L_step){
-    M = (double*) malloc(L * L * sizeof(double));
-    f = (double*) malloc(L * sizeof(double));
-    b = (double*) malloc(L * sizeof(double));
+  /* for(L = L_start; L < L_end; L += L_step){ */
+  /*   M = (double*) malloc(L * L * sizeof(double)); */
+  /*   f = (double*) malloc(L * sizeof(double)); */
+  /*   b = (double*) malloc(L * sizeof(double)); */
     
-    init_laplace_matrix(M, sigma, s, L);
+  /*   init_laplace_matrix(M, sigma, s, L); */
     
-    /* randomly filling b vector */
-    fill_source(b, 2.2, 0.5, L);
+  /*   /\* randomly filling b vector *\/ */
+  /*   fill_source(b, 2.2, 0.5, L); */
 
-    t_start = seconds();
+  /*   t_start = seconds(); */
 
-    for(j = 0; j < n_rep; ++j)
-      sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
+  /*   for(j = 0; j < n_rep; ++j) */
+  /*     sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it); */
 
-    t_end = seconds();
+  /*   t_end = seconds(); */
 
-    fprintf(sparse, "%d\t%lg\n", L, t_end - t_start);
-    fprintf(stderr, "\t%d\t%lg\n", L, t_end - t_start);
+  /*   fprintf(sparse, "%d\t%lg\n", L, t_end - t_start); */
+  /*   fprintf(stderr, "\t%d\t%lg\n", L, t_end - t_start); */
     
-    free(M);
-    free(f);
-    free(b);
-  }
+  /*   free(M); */
+  /*   free(f); */
+  /*   free(b); */
+  /* } */
   
-  fclose(sparse);
+  /* fclose(sparse); */
 
-  /* CHECK CONDITION NUMBER */
-  L = 6;
-  eigenv = (double*) malloc(L * sizeof(double));
+  /* /\* CHECK CONDITION NUMBER *\/ */
+  /* L = 6; */
+  /* eigenv = (double*) malloc(L * sizeof(double)); */
   
-  compute_eigenvalues(eigenv, sigma, L);
+  /* compute_eigenvalues(eigenv, sigma, L); */
 
-  printf("\n\tPrinting the eigenvalues for matrix with size %d and sigma = %lg\n\n", L, sigma);
-  for(j = 0; j < L; j++)
-    printf("\t%lg\n", eigenv[j]);
+  /* printf("\n\tPrinting the eigenvalues for matrix with size %d and sigma = %lg\n\n", L, sigma); */
+  /* for(j = 0; j < L; j++) */
+  /*   printf("\t%lg\n", eigenv[j]); */
 
-  printf("\n");
-  free(eigenv);
+  /* printf("\n"); */
+  /* free(eigenv); */
   
   return 0;
 }
