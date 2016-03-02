@@ -59,39 +59,39 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
   double *r = (double*) malloc(N * sizeof(double));
   double *p = (double*) malloc(N * sizeof(double));
   double *t;
-  double *r_old = (double*) malloc(N * sizeof(double));
-  double r_hat_square, alpha, beta;
+  double r_hat_square, alpha, beta, b_mod_square, r_mod_prev;
   
   /* arrays initialization */
   for(j = 0; j < N; j++){
     x[j] = 0.;
-    r_old[j] = b[j];
+    r[j] = b[j];
     p[j] = b[j];
   }
 
+  b_mod_square = vector_prod(b, b, N);
+  
   *n_iter = 0;
-  r_hat_square = vector_prod(r_old, r_old, N);
-  r_hat_square /= vector_prod(b, b, N);
+  r_hat_square = vector_prod(r, r, N);
+  r_hat_square /= b_mod_square;
 
   while(r_hat_square > prec * prec){
     t = mat_vec_prod(A, p, N);
-    alpha = vector_prod(r_old, r_old, N);
+    alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
+    r_mod_prev = vector_prod(r, r, N);
+    
     for(j = 0; j < N; j++){
       x[j] += alpha * p[j];
-      r[j] = r_old[j] - alpha * t[j];
+      r[j] -= alpha * t[j];
     }
 
-    beta = vector_prod(r, r, N);
-    beta /= vector_prod(r_old, r_old, N);
+    beta = vector_prod(r, r, N) / r_mod_prev;
 
-    for(j = 0; j < N; j++){
+    for(j = 0; j < N; j++)
       p[j] = r[j] + beta * p[j];
-      r_old[j] = r[j];
-    }
-    r_hat_square = vector_prod(r_old, r_old, N);
-    r_hat_square /= vector_prod(b, b, N);
+
+    r_hat_square = vector_prod(r, r, N) / b_mod_square;
     free(t);
 
     (*n_iter)++;
@@ -99,7 +99,6 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
 
   free(r);
   free(p);
-  free(r_old);
 }
 
 /* Perform the CONJUGATE GRADIENT ALGORITHM to obtain */
@@ -113,8 +112,7 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
   double *r = (double*) malloc(N * sizeof(double));
   double *p = (double*) malloc(N * sizeof(double));
   double *t;
-  double *r_old = (double*) malloc(N * sizeof(double));
-  double r_hat_square, alpha, beta, b_mod_square;
+  double r_hat_square, alpha, beta, b_mod_square, r_mod_prev;
 
   /* calculation of the A x_guess */
   t = mat_vec_prod(A, guess, N);
@@ -122,7 +120,7 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
   /* arrays initialization */
   for(j = 0; j < N; j++){
     x[j] = 0.;
-    r_old[j] = b[j] - t[j];
+    r[j] = b[j] - t[j];
     p[j] = b[j] - t[j];
   }
 
@@ -131,28 +129,27 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
   b_mod_square = vector_prod(p, p, N);
   
   *n_iter = 0;
-  r_hat_square = vector_prod(r_old, r_old, N);
+  r_hat_square = vector_prod(r, r, N);
   r_hat_square /= b_mod_square;
 
   while(r_hat_square > prec * prec){
     t = mat_vec_prod(A, p, N);
-    alpha = vector_prod(r_old, r_old, N);
+    alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
+    r_mod_prev = vector_prod(r, r, N);
+    
     for(j = 0; j < N; j++){
       x[j] += alpha * p[j];
-      r[j] = r_old[j] - alpha * t[j];
+      r[j] -= alpha * t[j];
     }
 
-    beta = vector_prod(r, r, N);
-    beta /= vector_prod(r_old, r_old, N);
+    beta = vector_prod(r, r, N) / r_mod_prev;
 
-    for(j = 0; j < N; j++){
+    for(j = 0; j < N; j++)
       p[j] = r[j] + beta * p[j];
-      r_old[j] = r[j];
-    }
-    r_hat_square = vector_prod(r_old, r_old, N);
-    r_hat_square /= b_mod_square;
+
+    r_hat_square = vector_prod(r, r, N) / b_mod_square;
     free(t);
 
     (*n_iter)++;
@@ -164,7 +161,6 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
     
   free(r);
   free(p);
-  free(r_old);
 }
 
 /* Perform the CONJUGATE GRADIENT ALGORITHM with the **sparse_prod** function to obtain */
@@ -178,39 +174,38 @@ void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, i
   double *r = (double*) malloc(N * sizeof(double));
   double *p = (double*) malloc(N * sizeof(double));
   double *t;
-  double *r_old = (double*) malloc(N * sizeof(double));
-  double r_hat_square, alpha, beta;
+  double r_hat_square, alpha, beta, b_mod_square, r_mod_prev;
   
   /* arrays initialization */
   for(j = 0; j < N; j++){
     x[j] = 0.;
-    r_old[j] = b[j];
+    r[j] = b[j];
     p[j] = b[j];
   }
 
+  b_mod_square = vector_prod(b, b, N);
+
   *n_iter = 0;
-  r_hat_square = vector_prod(r_old, r_old, N);
-  r_hat_square /= vector_prod(b, b, N);
+  r_hat_square = vector_prod(r, r, N) / b_mod_square;
 
   while(r_hat_square > prec * prec){
     t = sparse_prod(A, p, N);
-    alpha = vector_prod(r_old, r_old, N);
+    alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
+    r_mod_prev = vector_prod(r, r, N);
+    
     for(j = 0; j < N; j++){
       x[j] += alpha * p[j];
-      r[j] = r_old[j] - alpha * t[j];
+      r[j] -= alpha * t[j];
     }
 
-    beta = vector_prod(r, r, N);
-    beta /= vector_prod(r_old, r_old, N);
+    beta = vector_prod(r, r, N) / r_mod_prev;
 
-    for(j = 0; j < N; j++){
+    for(j = 0; j < N; j++)
       p[j] = r[j] + beta * p[j];
-      r_old[j] = r[j];
-    }
-    r_hat_square = vector_prod(r_old, r_old, N);
-    r_hat_square /= vector_prod(b, b, N);
+
+    r_hat_square = vector_prod(r, r, N) / b_mod_square;
     free(t);
 
     (*n_iter)++;
@@ -218,7 +213,6 @@ void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, i
 
   free(r);
   free(p);
-  free(r_old);
 }
 
 /* Perform the product between two vector of length N */
@@ -283,17 +277,15 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
   double* r_explicit;
   double* t; /* array in which store A r_(k - 1) */
   double* tmp;
-  double *r_old;
   double *p;
   double r_hat_square, alpha, beta, Fx;
-  double r_e, mod_b_square;
+  double r_e, mod_b_square, r_prev_mod;
   int j;
   FILE* min_check;
   FILE* explicit;
 
   r = (double*) malloc(N * sizeof(double));
   p = (double*) malloc(N * sizeof(double));
-  r_old = (double*) malloc(N * sizeof(double));
   r_explicit = (double*) malloc(N * sizeof(double));
   
   min_check = fopen("results/min_check_conj.dat", "w");
@@ -302,34 +294,32 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
   /* arrays initialization */
   for(j = 0; j < N; j++){
     x[j] = 0.;
-    r_old[j] = b[j];
+    r[j] = b[j];
     p[j] = b[j];
   }
   mod_b_square = vector_prod(b, b, N);
   
   *n_iter = 0;
-  r_hat_square = vector_prod(r_old, r_old, N);
-  r_hat_square /= mod_b_square;
+  r_hat_square = vector_prod(r, r, N) / mod_b_square;
 
   while(r_hat_square > prec * prec){
     t = mat_vec_prod(A, p, N);
-    alpha = vector_prod(r_old, r_old, N);
+    alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
+    r_prev_mod = vector_prod(r, r, N);
+    
     for(j = 0; j < N; j++){
       x[j] += alpha * p[j];
-      r[j] = r_old[j] - alpha * t[j];
+      r[j] -=  alpha * t[j];
     }
 
-    beta = vector_prod(r, r, N);
-    beta /= vector_prod(r_old, r_old, N);
+    beta = vector_prod(r, r, N) / r_prev_mod;
 
-    for(j = 0; j < N; j++){
+    for(j = 0; j < N; j++)
       p[j] = r[j] + beta * p[j];
-      r_old[j] = r[j];
-    }
-    r_hat_square = vector_prod(r_old, r_old, N);
-    r_hat_square /= mod_b_square; //vector_prod(b, b, N);
+
+    r_hat_square = vector_prod(r, r, N) / mod_b_square;
 
     (*n_iter)++;
 
@@ -362,6 +352,5 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
   
   free(r);
   free(p);
-  free(r_old);
   free(r_explicit);
 }
