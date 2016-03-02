@@ -37,7 +37,7 @@ int main(){
   i = 0;
   for(j = 0; j < L; j++){
     printf("\t%lg\t\t%lg\n", f[j], check_sol[j]);
-    if(abs(f[j] - check_sol[j]) > 1.e10)
+    if(abs(f[j] - check_sol[j]) > 1.e-10)
       i = 1;
   }
 
@@ -46,14 +46,15 @@ int main(){
   else
     printf("\n\tThe found solution is wrong\n");
   
-  sparse_conj_grad_alg(M, f, b, r_hat, L, &n_it);
+  /* sparse_conj_grad_alg(M, f, b, r_hat, L, &n_it); */
+  sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
 
   printf("\n\tSparse solution:  Check_sol:\n");
   i = 0;
 
   for(j = 0; j < L; j++){
     printf("\t%lg\t\t  %lg\n", f[j], check_sol[j]);
-    if(abs(f[j] - check_sol[j]) > 1.e14)
+    if(abs(f[j] - check_sol[j]) > 1.e-14)
       i = 1;
   }
 
@@ -117,7 +118,8 @@ int main(){
     t_start = seconds();
 
     for(j = 0; j < n_rep; ++j)
-      sparse_conj_grad_alg(M, f, b, r_hat, L, &n_it);
+      sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
+      /* sparse_conj_grad_alg(M, f, b, r_hat, L, &n_it); */
 
     t_end = seconds();
 

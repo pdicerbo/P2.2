@@ -7,7 +7,7 @@ int main(int argc, char** argv){
 
   double *A, *b, *sol, *check_sol;
 
-  double r_hat = 1.e-8, cond_numb = 1.e5;
+  double r_hat = 1.e-10, cond_numb = 1.e5;
   
   int N = 2, n_iter, i, j;
   
@@ -33,7 +33,7 @@ int main(int argc, char** argv){
   /* trivial solution control  */
   i = 0;
   for(j = 0; j < N; j++){
-    if(abs(sol[j] - check_sol[j]) > 1.e10)
+    if(abs(b[j] - check_sol[j]) > 1.e-7)
       i = 1;
   }
 
@@ -53,7 +53,7 @@ int main(int argc, char** argv){
   /* trivial solution control */
   i = 0;
   for(j = 0; j < N; j++){
-    if(abs(sol[j] - check_sol[j]) > 1.e10)
+    if(abs(b[j] - check_sol[j]) > 1.e-7)
       i = 1;
   }
 

@@ -168,7 +168,8 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
 /* This function store the result into array x */
 /* The number of iterations is stored into n_iter */
 /* the found solution is stored in x */
-void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){
+/* void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){ */
+void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double prec, int N, int* n_iter){
 
   int j;
   double *r = (double*) malloc(N * sizeof(double));
@@ -189,7 +190,7 @@ void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, i
   r_hat_square = vector_prod(r, r, N) / b_mod_square;
 
   while(r_hat_square > prec * prec){
-    t = sparse_prod(A, p, N);
+    t = sparse_prod(p, sigma, s, N);
     alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
@@ -247,21 +248,22 @@ double* mat_vec_prod(double* A, double* x, int N){
 
 /* Perform the product between a matrix and a vector */
 /* taking into account that the matrix is sparse */
-double* sparse_prod(double* A, double* x, int N){
+double* sparse_prod(double* x, double sigma, double s, int N){
   double* ret = (double*) calloc(N, sizeof(double));
-  int i, j, offset = 0;
-
+  /* int i, j, offset = 0; */
+  int i;
   /* first and last entry of the vector are computed "by hand" */
-  ret[0] = A[0] * x[0] + A[1] * x[1] + A[N - 1] * x[N - 1];
+  ret[0] = (sigma + 1.) * x[0] + s * x[1] + s * x[N - 1];
   
   for(i = 1; i < N - 1; i++){
-    for(j = 0; j < 3; j++){
-      ret[i] += A[j + offset + i*N] * x[j +  offset];
-    }
-    offset++;
+    /* for(j = 0; j < 3; j++){ */
+      /* ret[i] += A[j + offset + i*N] * x[j +  offset]; */
+    ret[i] = s * x[i - 1] + (sigma + 1.) * x[i] + s * x[i + 1];
+    /* } */
   }
 
-  ret[N - 1] = A[N * (N - 1)] * x[0] + A[N * N - 2] * x[N - 2] + A[N * N - 1] * x[N - 1];
+  /* ret[N - 1] = A[N * (N - 1)] * x[0] + A[N * N - 2] * x[N - 2] + A[N * N - 1] * x[N - 1]; */
+  ret[N - 1] = s * x[0] + s * x[N - 2] + (sigma + 1.) * x[N - 1];
 
   return ret;
 }
