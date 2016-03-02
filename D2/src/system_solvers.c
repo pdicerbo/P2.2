@@ -255,14 +255,9 @@ double* sparse_prod(double* x, double sigma, double s, int N){
   /* first and last entry of the vector are computed "by hand" */
   ret[0] = (sigma + 1.) * x[0] + s * x[1] + s * x[N - 1];
   
-  for(i = 1; i < N - 1; i++){
-    /* for(j = 0; j < 3; j++){ */
-      /* ret[i] += A[j + offset + i*N] * x[j +  offset]; */
+  for(i = 1; i < N - 1; i++)
     ret[i] = s * x[i - 1] + (sigma + 1.) * x[i] + s * x[i + 1];
-    /* } */
-  }
 
-  /* ret[N - 1] = A[N * (N - 1)] * x[0] + A[N * N - 2] * x[N - 2] + A[N * N - 1] * x[N - 1]; */
   ret[N - 1] = s * x[0] + s * x[N - 2] + (sigma + 1.) * x[N - 1];
 
   return ret;

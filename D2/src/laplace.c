@@ -46,7 +46,6 @@ int main(){
   else
     printf("\n\tThe found solution is wrong\n");
   
-  /* sparse_conj_grad_alg(M, f, b, r_hat, L, &n_it); */
   sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
 
   printf("\n\tSparse solution:  Check_sol:\n");
@@ -119,7 +118,6 @@ int main(){
 
     for(j = 0; j < n_rep; ++j)
       sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
-      /* sparse_conj_grad_alg(M, f, b, r_hat, L, &n_it); */
 
     t_end = seconds();
 
