@@ -49,6 +49,9 @@ int main(int argc, char** argv){
     b_send = (double*) malloc(L * sizeof(double));
 
     /* "segment" of the b vector that belong to process 0 */
+    /* otherwise I can also generate the random vector with the process NPE - 1 */
+    /* and then send it to the others processes (avoiding the usage of two buffers) */
+    /* but in this way the check on the rest is slightly complicate */
     fill_source(b, 2.2, 0.5, L);
 
     /* need use l_tmp because if rest != 0, process 0 have to send bunch */
@@ -76,9 +79,23 @@ int main(int argc, char** argv){
   /* randomly filling b vector */
   fill_source(b, 2.2, 0.5, L);
 
+  for(j = 0; j < L; j++)
+    printf("\t%lg\n", b[j]);
+  
+  check_sol = sparse_prod(b, sigma, s, L);
+  printf("\n\tAFTER\n");
+  
+  for(j = 0; j < L; j++)
+    printf("\t%lg\n", check_sol[j]);
+  
 #endif /* __MPI */
+  check_sol = sparse_prod(b, sigma, s, L, MyID, NPE);
+  printf("\n\tAFTER\n");
+  
+  for(j = 0; j < L; j++)
+    printf("\t%lg\n", check_sol[j]);
 
-  sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
+  /* sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it); */
   
 #ifdef __MPI
   if(MyID == 0){
@@ -114,7 +131,9 @@ int main(int argc, char** argv){
   
   /* for(i = 0; i < L; i++) */
   /*   printf("\t%d\t%d\n", i, (i+1) % L); */
+
   /* printf("\n\n"); */
+
   /* for(i = 0; i < L; i++) */
   /*   printf("\t%d\t%d\n", i, (L + i - 1) % L); */
 

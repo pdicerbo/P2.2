@@ -3,6 +3,10 @@
 #include <math.h>
 #include "../include/system_solvers.h"
 
+#ifdef __MPI
+#include <mpi.h>
+#endif /* __MPI */
+
 /* Perform the GRADIENT ALGORITHM to obtain */
 /* the solution of the system "A x = b" with relative error "prec"*/
 /* This function store the result into array x */
@@ -169,8 +173,11 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
 /* The number of iterations is stored into n_iter */
 /* the found solution is stored in x */
 /* void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){ */
+#ifdef __MPI
+void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double prec, int N, int* n_iter, int MyID, int NPE){
+#else
 void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double prec, int N, int* n_iter){
-
+#endif
   int j;
   double *r = (double*) malloc(N * sizeof(double));
   double *p = (double*) malloc(N * sizeof(double));
@@ -190,7 +197,16 @@ void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double p
   r_hat_square = vector_prod(r, r, N) / b_mod_square;
 
   while(r_hat_square > prec * prec){
+    
+#ifdef __MPI
+
+    t = sparse_prod(p, sigma, s, N, MyID, NPE);
+
+#else
+    
     t = sparse_prod(p, sigma, s, N);
+    
+#endif /* __MPI */
     alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
@@ -248,10 +264,47 @@ double* mat_vec_prod(double* A, double* x, int N){
 
 /* Perform the product between a matrix and a vector */
 /* taking into account that the matrix is sparse */
+#ifdef __MPI
+
+double* sparse_prod(double* x, double sigma, double s, int N, int MyID, int NPE){
+
+#else
+
 double* sparse_prod(double* x, double sigma, double s, int N){
+
+#endif /* __MPI */
+
   double* ret = (double*) calloc(N, sizeof(double));
-  /* int i, j, offset = 0; */
   int i;
+
+#ifdef __MPI
+  int sendtag = 42, rectag = 24;
+  
+  /* computation of the product of the diagonal elements*/
+  for(i = 0; i < N; i++)
+    ret[i] = (sigma + 1.) * x[i];
+
+  fprintf(stderr, "MyID = %d, NPE = %d, back = %d, next = %d\n", MyID, NPE, (MyID+NPE-1) % NPE, (MyID+1)% NPE);
+
+    /* "up shifting" */
+  MPI_Sendrecv(x, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, sendtag, x, 1, MPI_DOUBLE, (MyID+1)%NPE, rectag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  fprintf(stderr, "MyID = %d, back = %d, next = %d\n", MyID, (MyID+NPE-1) % NPE, (MyID+1) % NPE);
+
+  /* updating the product */
+  for(i = 0; i < N; i++)
+    ret[i] += s * x[(i+1)%N];
+
+  /* "arrow inversion" */
+  MPI_Sendrecv(x, 1, MPI_DOUBLE, (MyID+1)%NPE, sendtag, x, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, rectag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+  /* "down shifting" */
+  MPI_Sendrecv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+1 % NPE), sendtag, &(x[N-1]), 1, MPI_DOUBLE, (MyID+NPE-1 % NPE), rectag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  /* "finalizing" the product */
+  for(i = 0; i < N; i++)
+    ret[i] += s * x[(N+i-1)%N];
+
+#else
+  
   /* first and last entry of the vector are computed "by hand" */
   ret[0] = (sigma + 1.) * x[0] + s * x[1] + s * x[N - 1];
   
@@ -259,7 +312,9 @@ double* sparse_prod(double* x, double sigma, double s, int N){
     ret[i] = s * x[i - 1] + (sigma + 1.) * x[i] + s * x[i + 1];
 
   ret[N - 1] = s * x[0] + s * x[N - 2] + (sigma + 1.) * x[N - 1];
-
+  
+#endif /* __MPI */
+  
   return ret;
 }
 
