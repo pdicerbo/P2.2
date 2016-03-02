@@ -63,6 +63,12 @@ int main(){
     printf("\n\tThe found solution is correct\n");
   else
     printf("\n\tThe found solution is wrong\n");
+
+  for(i = 0; i < L; i++)
+    printf("\t%d\t%d\n", i, (i+1) % L);
+  printf("\n\n");
+  for(i = 0; i < L; i++)
+    printf("\t%d\t%d\n", i, (L + i - 1) % L);
   
   free(M);
   free(f);
