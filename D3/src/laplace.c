@@ -24,7 +24,7 @@ int main(int argc, char** argv){
   /* version; each process works on a vector of size L / NumberProcessingElements */
   /* (unless there is a rest, that requires a work redistribution) */
   
-  int NPE, MyID, MyTag, vsize, rest, l_tmp;
+  int NPE, MyID, MyTag, vsize, rest, l_tmp, count;
   double* b_send;
   int *displ, *recv;
   
@@ -43,13 +43,14 @@ int main(int argc, char** argv){
 #endif /* __MPI */
   
   /* arrays needed by both serial and parallel version */
-  f = (double*) malloc(L * sizeof(double));
-  b = (double*) malloc(L * sizeof(double));
 
 /* "initialization" section */
 #ifdef __MPI
 
   if(MyID == 0){
+    f = (double*) malloc(L * sizeof(double));
+    b = (double*) malloc(vsize * sizeof(double));
+
     /* process 0 generates the random b vector and sends */
     /* various pieces to the other processes */
     /* while I send data, I initialize also "displs" and "recv" array */
@@ -64,34 +65,40 @@ int main(int argc, char** argv){
     /* otherwise I can also generate the random vector with the process NPE - 1 */
     /* and then send it to the others processes (avoiding the usage of two buffers) */
     /* but in this way the check on the rest is slightly complicate */
-    fill_source(b, 2.2, 0.5, L);
+    /* fill_source(b, 2.2, 0.5, L); */
+    fill_source(b, 2.2, 0.5, vsize);
 
     /* need use l_tmp because if rest != 0, process 0 have to send bunch */
     /* of array of different size */			      
     l_tmp = L;
-    
+    count = 0;
     for(j = 1; j < NPE; j++){
       
+      count += l_tmp;      
+
       if(rest != 0 && j == rest)
 	l_tmp--;
       
-      fill_source(b_send, 2.2, 0.5, l_tmp);
-      MPI_Send(b_send, l_tmp, MPI_DOUBLE, j, MyTag, MPI_COMM_WORLD);
+      MPI_Send(&b[count], l_tmp, MPI_DOUBLE, j, MyTag, MPI_COMM_WORLD);
       recv[j] = l_tmp;
       displ[j] = displ[j-1]+recv[j-1]; 
     }
     free(b_send);
     
     /* recycle this pointer to gather the results. */
-    /*   only process 0 need b_send */
+    /* only process 0 need b_send */
     b_send = (double*) malloc(vsize * sizeof(double));
   }
   else{
+    f = (double*) malloc(L * sizeof(double));
+    b = (double*) malloc(L * sizeof(double));
     /* processes with MyID != 0 receives alwais in b */
     MPI_Recv(b, L, MPI_DOUBLE, 0, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
 #else
+  f = (double*) malloc(L * sizeof(double));
+  b = (double*) malloc(L * sizeof(double));
   
   /* randomly filling b vector */
   fill_source(b, 2.2, 0.5, L);
@@ -112,7 +119,23 @@ int main(int argc, char** argv){
       printf("\t%lg\n", b_send[j]);
     
   check_sol = (double*) malloc(vsize * sizeof(double));
+  inverse_laplace_operator(check_sol, b, sigma, vsize, vsize);
 
+  printf("\n\tSparse solution:  Check_sol:\n");
+  i = 0;
+
+  for(j = 0; j < vsize; j++){
+    printf("\t%lg\t\t  %lg\n", b_send[j], check_sol[j]);
+    if(abs(b_send[j] - check_sol[j]) > 1.e-14)
+      i = 1;
+  }
+
+  if(i == 0)
+    printf("\n\tThe found solution is correct\n");
+  else
+    printf("\n\tThe found solution is wrong\n");
+  
+  }
 #else
 
   sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
@@ -124,8 +147,6 @@ int main(int argc, char** argv){
 
   check_sol = (double*) malloc(L * sizeof(double));
 
-#endif /* __MPI */
-  
   inverse_laplace_operator(check_sol, b, sigma, L, L);
 
   printf("\n\tSparse solution:  Check_sol:\n");
@@ -142,8 +163,6 @@ int main(int argc, char** argv){
   else
     printf("\n\tThe found solution is wrong\n");
   
-#ifdef __MPI
-  } /* close the "check results" parenthesis that only process 0 performs */
 #endif /* __MPI */
 
 #ifdef __MPI
