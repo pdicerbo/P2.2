@@ -5,50 +5,93 @@
 #include "../include/system_solvers.h"
 #include "../include/laplace_utils.h"
 
-int main(){
+#ifdef __MPI
+#include <mpi.h>
+#endif /* __MPI */
 
-  double *M, *f, *b, *check_sol;
+int main(int argc, char** argv){
+
+  double *f, *b, *check_sol;
   double r_hat = 1.e-15;
   double sigma = 0.6, s = -0.5;
   int i, j, n_it, L;
+  
+  L = 6; // vector size
 
-  /* double *eigenv; */
-  /* double t_start, t_end; */
-  /* int n_rep = 1000; */
-  /* int L_start = 10, L_end = 5e2, L_step = 50; */
-  /* FILE* classic; */
-  /* FILE* sparse; */
+#ifdef __MPI
 
-  L = 6;
-  M = (double*) malloc(L * L * sizeof(double));
+  int NPE, MyID, MyTag, vsize, rest, l_tmp;
+  double* b_send;
+  
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &MyID);
+  MPI_Comm_size(MPI_COMM_WORLD, &NPE);
+
+  /* printf("MyID = %d, s = %lg, L = %d", MyID, s, L); */
+  MyTag = 42;
+  vsize = L;
+  L /= NPE;
+  rest = vsize % NPE;
+
+  if(rest != 0 && MyID < rest)
+    L++;
+
+#endif /* __MPI */  
+
   f = (double*) malloc(L * sizeof(double));
   b = (double*) malloc(L * sizeof(double));
-  check_sol = (double*) malloc(L * sizeof(double));
 
-  init_laplace_matrix(M, sigma, s, L);
-    
+#ifdef __MPI
+
+  if(MyID == 0){
+    /* process 0 generates the random b vector and sends */
+    /* various pieces to the other processes */
+    b_send = (double*) malloc(L * sizeof(double));
+
+    /* "segment" of the b vector that belong to process 0 */
+    fill_source(b, 2.2, 0.5, L);
+
+    /* need use l_tmp because if rest != 0, process 0 have to send bunch */
+    /* of array of different size */			      
+    l_tmp = L;
+
+    for(j = 1; j < NPE; j++){
+      
+      if(rest != 0 && j == rest)
+	l_tmp--;
+      
+      fill_source(b_send, 2.2, 0.5, l_tmp);
+
+      MPI_Send(b_send, l_tmp, MPI_DOUBLE, j, MyTag, MPI_COMM_WORLD);
+      
+    }
+  }
+  else{
+    /* processes with MyID != 0 receives alwais in b */
+    MPI_Recv(b, L, MPI_DOUBLE, 0, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  }
+
+#else
+  
   /* randomly filling b vector */
   fill_source(b, 2.2, 0.5, L);
 
-  conj_grad_alg(M, f, b, r_hat, L, &n_it);
+#endif /* __MPI */
 
-  inverse_laplace_operator(check_sol, b, sigma, L, L);
-
-  printf("\n\tMy solution:    Check_sol:\n");
-
-  i = 0;
-  for(j = 0; j < L; j++){
-    printf("\t%lg\t\t%lg\n", f[j], check_sol[j]);
-    if(abs(f[j] - check_sol[j]) > 1.e-10)
-      i = 1;
-  }
-
-  if(i == 0)
-    printf("\n\tThe found solution is correct\n");
-  else
-    printf("\n\tThe found solution is wrong\n");
-  
   sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
+  
+#ifdef __MPI
+  if(MyID == 0){
+    
+  check_sol = (double*) malloc(vsize * sizeof(double));
+
+#else
+
+  check_sol = (double*) malloc(L * sizeof(double));
+
+#endif /* __MPI */
+  
+  inverse_laplace_operator(check_sol, b, sigma, L, L);
 
   printf("\n\tSparse solution:  Check_sol:\n");
   i = 0;
@@ -63,94 +106,35 @@ int main(){
     printf("\n\tThe found solution is correct\n");
   else
     printf("\n\tThe found solution is wrong\n");
+#ifdef __MPI
+  }
+#endif /* __MPI */
 
-  for(i = 0; i < L; i++)
-    printf("\t%d\t%d\n", i, (i+1) % L);
-  printf("\n\n");
-  for(i = 0; i < L; i++)
-    printf("\t%d\t%d\n", i, (L + i - 1) % L);
+#ifdef __MPI
   
-  free(M);
+  /* for(i = 0; i < L; i++) */
+  /*   printf("\t%d\t%d\n", i, (i+1) % L); */
+  /* printf("\n\n"); */
+  /* for(i = 0; i < L; i++) */
+  /*   printf("\t%d\t%d\n", i, (L + i - 1) % L); */
+
+  MPI_Finalize();
+  
+#endif /* __MPI */
+  
   free(f);
   free(b);
+
+#ifdef __MPI
+  if(MyID == 0){
+    free(b_send);
+#endif /* __MPI */
+
   free(check_sol);
   
-  /* fprintf(stderr, "\n\tTIMING SECTION\n"); */
-  /* fprintf(stderr, "\tperform %d repetition for each matrix size\n\n", n_rep); */
-  
-  /* classic = fopen("results/classic_timing.dat", "w"); */
-  /* fprintf(stderr, "\tSIZE\ttime (s)\n\n", L, t_end - t_start); */
-  /* for(L = L_start; L < L_end; L += L_step){ */
-  /*   M = (double*) malloc(L * L * sizeof(double)); */
-  /*   f = (double*) malloc(L * sizeof(double)); */
-  /*   b = (double*) malloc(L * sizeof(double)); */
-
+#ifdef __MPI
+  }
+#endif /* __MPI */
     
-  /*   init_laplace_matrix(M, sigma, s, L); */
-    
-  /*   /\* randomly filling b vector *\/ */
-  /*   fill_source(b, 2.2, 0.5, L); */
-
-  /*   t_start = seconds(); */
-
-  /*   for(j = 0; j < n_rep; ++j) */
-  /*     conj_grad_alg(M, f, b, r_hat, L, &n_it); */
-
-  /*   t_end = seconds(); */
-
-  /*   fprintf(classic, "%d\t%lg\n", L, t_end - t_start); */
-  /*   fprintf(stderr, "\t%d\t%lg\n", L, t_end - t_start); */
-    
-  /*   free(M); */
-  /*   free(f); */
-  /*   free(b); */
-  /* } */
-  
-  /* fclose(classic); */
-
-  /* /\* Timing of the "sparse" optimized function *\/ */
-  /* fprintf(stderr, "\n\tsparse section\n\n"); */
-  /* sparse = fopen("results/sparse_timing.dat", "w"); */
-
-  /* for(L = L_start; L < L_end; L += L_step){ */
-  /*   M = (double*) malloc(L * L * sizeof(double)); */
-  /*   f = (double*) malloc(L * sizeof(double)); */
-  /*   b = (double*) malloc(L * sizeof(double)); */
-    
-  /*   init_laplace_matrix(M, sigma, s, L); */
-    
-  /*   /\* randomly filling b vector *\/ */
-  /*   fill_source(b, 2.2, 0.5, L); */
-
-  /*   t_start = seconds(); */
-
-  /*   for(j = 0; j < n_rep; ++j) */
-  /*     sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it); */
-
-  /*   t_end = seconds(); */
-
-  /*   fprintf(sparse, "%d\t%lg\n", L, t_end - t_start); */
-  /*   fprintf(stderr, "\t%d\t%lg\n", L, t_end - t_start); */
-    
-  /*   free(M); */
-  /*   free(f); */
-  /*   free(b); */
-  /* } */
-  
-  /* fclose(sparse); */
-
-  /* /\* CHECK CONDITION NUMBER *\/ */
-  /* L = 6; */
-  /* eigenv = (double*) malloc(L * sizeof(double)); */
-  
-  /* compute_eigenvalues(eigenv, sigma, L); */
-
-  /* printf("\n\tPrinting the eigenvalues for matrix with size %d and sigma = %lg\n\n", L, sigma); */
-  /* for(j = 0; j < L; j++) */
-  /*   printf("\t%lg\n", eigenv[j]); */
-
-  /* printf("\n"); */
-  /* free(eigenv); */
-  
   return 0;
 }

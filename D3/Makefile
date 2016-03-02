@@ -1,4 +1,4 @@
-default: main
+default: parallel #main
 
 main:
 	$(MAKE) -C src
@@ -6,6 +6,8 @@ main:
 test:
 	$(MAKE) -C $@
 
+parallel:
+	$(MAKE) -C src parallel
 plot:
 	python src/plot.py
 

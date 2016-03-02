@@ -11,6 +11,12 @@ all: default
 
 default: ../laplace.x
 
+parallel: CXXFLAGS += -D__MPI
+parallel: CFLAGS += -D__MPI
+parallel: CXX = mpicxx
+parallel: CC = mpicc
+parallel: default
+
 ../laplace.x : $(OBJ) $(MY_LIBS)
 	$(CXX) -o $@ $(LIBS) $^
 
