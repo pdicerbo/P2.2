@@ -25,7 +25,7 @@ int main(int argc, char** argv){
   /* (unless there is a rest, that requires a work redistribution) */
   
   int NPE, MyID, MyTag, vsize, rest, l_tmp, count;
-  double* b_send;
+  double* results_recv;
   int *displ, *recv;
   
   MPI_Init(&argc, &argv);
@@ -40,13 +40,7 @@ int main(int argc, char** argv){
   if(rest != 0 && MyID < rest)
     L++;
 
-#endif /* __MPI */
-  
-  /* arrays needed by both serial and parallel version */
-
-/* "initialization" section */
-#ifdef __MPI
-
+  /* "initialization" section */
   if(MyID == 0){
     f = (double*) malloc(L * sizeof(double));
     b = (double*) malloc(vsize * sizeof(double));
@@ -55,23 +49,22 @@ int main(int argc, char** argv){
     /* various pieces to the other processes */
     /* while I send data, I initialize also "displs" and "recv" array */
     /* needed to gather the results */
-    b_send = (double*) malloc(L * sizeof(double));
     displ  = (int*) malloc(NPE * sizeof(int));
     recv   = (int*) malloc(NPE * sizeof(int));
 
     recv[0] = L;
     displ[0] = 0;
-    /* "segment" of the b vector that belong to process 0 */
-    /* otherwise I can also generate the random vector with the process NPE - 1 */
-    /* and then send it to the others processes (avoiding the usage of two buffers) */
-    /* but in this way the check on the rest is slightly complicate */
-    /* fill_source(b, 2.2, 0.5, L); */
+
+    /* process 0 stores all the b vector in order to check */
+    /*   the correctness of the results via inverse_laplace_operator */
+    /* otherwais, when needed, I could also gather all the pieces from the others processes */
     fill_source(b, 2.2, 0.5, vsize);
 
     /* need use l_tmp because if rest != 0, process 0 have to send bunch */
     /* of array of different size */			      
     l_tmp = L;
     count = 0;
+    
     for(j = 1; j < NPE; j++){
       
       count += l_tmp;      
@@ -83,11 +76,9 @@ int main(int argc, char** argv){
       recv[j] = l_tmp;
       displ[j] = displ[j-1]+recv[j-1]; 
     }
-    free(b_send);
-    
     /* recycle this pointer to gather the results. */
     /* only process 0 need b_send */
-    b_send = (double*) malloc(vsize * sizeof(double));
+    results_recv = (double*) malloc(vsize * sizeof(double));
   }
   else{
     f = (double*) malloc(L * sizeof(double));
@@ -96,27 +87,17 @@ int main(int argc, char** argv){
     MPI_Recv(b, L, MPI_DOUBLE, 0, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 
-#else
-  f = (double*) malloc(L * sizeof(double));
-  b = (double*) malloc(L * sizeof(double));
-  
-  /* randomly filling b vector */
-  fill_source(b, 2.2, 0.5, L);
-  
-#endif /* __MPI -> end of the "initialization" section */
-
-  /* Finally, we performs the calculation and checks the results */
-#ifdef __MPI
-  
+  /* end of the "initialization" section */
+  /* Finally, we performs the calculation and checks the results */  
   sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it, MyID, NPE);
 
   /* process 0 gather the results and checks the correctness */
-  MPI_Gatherv(f, L, MPI_DOUBLE, b_send, recv, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(f, L, MPI_DOUBLE, results_recv, recv, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
   if(MyID == 0){
     printf("\n\tResults from process %d\n", MyID);
     for(j = 0; j < vsize; j++)
-      printf("\t%lg\n", b_send[j]);
+      printf("\t%lg\n", results_recv[j]);
     
   check_sol = (double*) malloc(vsize * sizeof(double));
   inverse_laplace_operator(check_sol, b, sigma, vsize, vsize);
@@ -125,8 +106,8 @@ int main(int argc, char** argv){
   i = 0;
 
   for(j = 0; j < vsize; j++){
-    printf("\t%lg\t\t  %lg\n", b_send[j], check_sol[j]);
-    if(abs(b_send[j] - check_sol[j]) > 1.e-14)
+    printf("\t%lg\t\t  %lg\n", results_recv[j], check_sol[j]);
+    if(abs(results_recv[j] - check_sol[j]) > 1.e-14)
       i = 1;
   }
 
@@ -136,7 +117,13 @@ int main(int argc, char** argv){
     printf("\n\tThe found solution is wrong\n");
   
   }
-#else
+#else /* serial version of the code */
+
+  f = (double*) malloc(L * sizeof(double));
+  b = (double*) malloc(L * sizeof(double));
+  
+  /* randomly filling b vector */
+  fill_source(b, 2.2, 0.5, L);
 
   sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
 
@@ -177,8 +164,9 @@ int main(int argc, char** argv){
 #ifdef __MPI
 
   if(MyID == 0){
-    free(b_send);
-    
+    free(results_recv);
+    free(displ);
+    free(recv);
 #endif /* __MPI */
 
   free(check_sol);
