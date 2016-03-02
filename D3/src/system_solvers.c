@@ -278,27 +278,33 @@ double* sparse_prod(double* x, double sigma, double s, int N){
   int i;
 
 #ifdef __MPI
-  int sendtag = 42, rectag = 24;
+  int MyTag = 42;
+  double x_tmp;
+  MPI_Request MyReq;
   
   /* computation of the product of the diagonal elements*/
   for(i = 0; i < N; i++)
     ret[i] = (sigma + 1.) * x[i];
 
-  fprintf(stderr, "MyID = %d, NPE = %d, back = %d, next = %d\n", MyID, NPE, (MyID+NPE-1) % NPE, (MyID+1)% NPE);
-
-    /* "up shifting" */
-  MPI_Sendrecv(x, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, sendtag, x, 1, MPI_DOUBLE, (MyID+1)%NPE, rectag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  fprintf(stderr, "MyID = %d, back = %d, next = %d\n", MyID, (MyID+NPE-1) % NPE, (MyID+1) % NPE);
-
+  /* "up shifting" */
+  x_tmp = x[0];
+  MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
+  MPI_Recv(x, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  
   /* updating the product */
   for(i = 0; i < N; i++)
     ret[i] += s * x[(i+1)%N];
 
   /* "arrow inversion" */
-  MPI_Sendrecv(x, 1, MPI_DOUBLE, (MyID+1)%NPE, sendtag, x, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, rectag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  x_tmp = x[0];
+  MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
+  MPI_Recv(x, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   /* "down shifting" */
-  MPI_Sendrecv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+1 % NPE), sendtag, &(x[N-1]), 1, MPI_DOUBLE, (MyID+NPE-1 % NPE), rectag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  x_tmp = x[N-1];
+  MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
+  MPI_Recv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
   /* "finalizing" the product */
   for(i = 0; i < N; i++)
     ret[i] += s * x[(N+i-1)%N];
