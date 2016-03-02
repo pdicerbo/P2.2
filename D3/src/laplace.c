@@ -16,18 +16,22 @@ int main(int argc, char** argv){
   double sigma = 0.6, s = -0.5;
   int i, j, n_it, L;
   
-  L = 6; // vector size
+  L = 6; // "full" vector size
 
 #ifdef __MPI
 
+  /* Initialization of the variables needed in the parallelized */
+  /* version; each process works on a vector of size L / NumberProcessingElements */
+  /* (unless there is a rest, that requires a work redistribution) */
+  
   int NPE, MyID, MyTag, vsize, rest, l_tmp;
   double* b_send;
+  int *displ, *recv;
   
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &MyID);
   MPI_Comm_size(MPI_COMM_WORLD, &NPE);
 
-  /* printf("MyID = %d, s = %lg, L = %d", MyID, s, L); */
   MyTag = 42;
   vsize = L;
   L /= NPE;
@@ -36,18 +40,26 @@ int main(int argc, char** argv){
   if(rest != 0 && MyID < rest)
     L++;
 
-#endif /* __MPI */  
-
+#endif /* __MPI */
+  
+  /* arrays needed by both serial and parallel version */
   f = (double*) malloc(L * sizeof(double));
   b = (double*) malloc(L * sizeof(double));
 
+/* "initialization" section */
 #ifdef __MPI
 
   if(MyID == 0){
     /* process 0 generates the random b vector and sends */
     /* various pieces to the other processes */
+    /* while I send data, I initialize also "displs" and "recv" array */
+    /* needed to gather the results */
     b_send = (double*) malloc(L * sizeof(double));
+    displ  = (int*) malloc(NPE * sizeof(int));
+    recv   = (int*) malloc(NPE * sizeof(int));
 
+    recv[0] = L;
+    displ[0] = 0;
     /* "segment" of the b vector that belong to process 0 */
     /* otherwise I can also generate the random vector with the process NPE - 1 */
     /* and then send it to the others processes (avoiding the usage of two buffers) */
@@ -57,17 +69,22 @@ int main(int argc, char** argv){
     /* need use l_tmp because if rest != 0, process 0 have to send bunch */
     /* of array of different size */			      
     l_tmp = L;
-
+    
     for(j = 1; j < NPE; j++){
       
       if(rest != 0 && j == rest)
 	l_tmp--;
       
       fill_source(b_send, 2.2, 0.5, l_tmp);
-
       MPI_Send(b_send, l_tmp, MPI_DOUBLE, j, MyTag, MPI_COMM_WORLD);
-      
+      recv[j] = l_tmp;
+      displ[j] = displ[j-1]+recv[j-1]; 
     }
+    free(b_send);
+    
+    /* recycle this pointer to gather the results. */
+    /*   only process 0 need b_send */
+    b_send = (double*) malloc(vsize * sizeof(double));
   }
   else{
     /* processes with MyID != 0 receives alwais in b */
@@ -78,29 +95,32 @@ int main(int argc, char** argv){
   
   /* randomly filling b vector */
   fill_source(b, 2.2, 0.5, L);
-
-  /* check_sol = sparse_prod(b, sigma, s, L); */
-  sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
-  printf("\n\tSOLUTION\n");
   
-  for(j = 0; j < L; j++)
-    printf("\t%lg\n", f[j]);
-  
-#endif /* __MPI */
+#endif /* __MPI -> end of the "initialization" section */
 
+  /* Finally, we performs the calculation and checks the results */
 #ifdef __MPI
   
   sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it, MyID, NPE);
 
-  for(j = 0; j < L; j++)
-    printf("\t%lg\n", f[j]);
+  /* process 0 gather the results and checks the correctness */
+  MPI_Gatherv(f, L, MPI_DOUBLE, b_send, recv, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
-
   if(MyID == 0){
+    printf("\n\tResults from process %d\n", MyID);
+    for(j = 0; j < vsize; j++)
+      printf("\t%lg\n", b_send[j]);
     
   check_sol = (double*) malloc(vsize * sizeof(double));
 
 #else
+
+  sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
+
+  printf("\n\tSOLUTION\n");
+  
+  for(j = 0; j < L; j++)
+    printf("\t%lg\n", f[j]);
 
   check_sol = (double*) malloc(L * sizeof(double));
 
@@ -121,20 +141,13 @@ int main(int argc, char** argv){
     printf("\n\tThe found solution is correct\n");
   else
     printf("\n\tThe found solution is wrong\n");
+  
 #ifdef __MPI
-  }
+  } /* close the "check results" parenthesis that only process 0 performs */
 #endif /* __MPI */
 
 #ifdef __MPI
   
-  /* for(i = 0; i < L; i++) */
-  /*   printf("\t%d\t%d\n", i, (i+1) % L); */
-
-  /* printf("\n\n"); */
-
-  /* for(i = 0; i < L; i++) */
-  /*   printf("\t%d\t%d\n", i, (L + i - 1) % L); */
-
   MPI_Finalize();
   
 #endif /* __MPI */
@@ -143,8 +156,10 @@ int main(int argc, char** argv){
   free(b);
 
 #ifdef __MPI
+
   if(MyID == 0){
     free(b_send);
+    
 #endif /* __MPI */
 
   free(check_sol);
