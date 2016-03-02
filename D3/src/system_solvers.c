@@ -173,11 +173,17 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
 /* The number of iterations is stored into n_iter */
 /* the found solution is stored in x */
 /* void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){ */
+
 #ifdef __MPI
+
 void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double prec, int N, int* n_iter, int MyID, int NPE){
+
 #else
+
 void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double prec, int N, int* n_iter){
-#endif
+
+#endif /* __MPI */
+
   int j;
   double *r = (double*) malloc(N * sizeof(double));
   double *p = (double*) malloc(N * sizeof(double));
@@ -192,26 +198,28 @@ void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double p
   }
 
   b_mod_square = vector_prod(b, b, N);
-
+  
   *n_iter = 0;
+
   r_hat_square = vector_prod(r, r, N) / b_mod_square;
 
   while(r_hat_square > prec * prec){
-    
+
 #ifdef __MPI
 
     t = sparse_prod(p, sigma, s, N, MyID, NPE);
 
 #else
-    
+
     t = sparse_prod(p, sigma, s, N);
     
 #endif /* __MPI */
+
     alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
     r_mod_prev = vector_prod(r, r, N);
-    
+
     for(j = 0; j < N; j++){
       x[j] += alpha * p[j];
       r[j] -= alpha * t[j];
@@ -238,10 +246,22 @@ double vector_prod(double* x, double* y, int N){
 
   double prod = 0.;
   int j;
+
+#ifdef __MPI
+  double total_prod;
+#endif /* __MPI */
   
   for(j = 0; j < N; j++)
     prod += x[j] * y[j];
 
+#ifdef __MPI
+
+  MPI_Allreduce(&prod, &total_prod, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+  prod = total_prod;
+  
+#endif  /* __MPI */
+  
   return prod;
 }
 
@@ -308,6 +328,11 @@ double* sparse_prod(double* x, double sigma, double s, int N){
   /* "finalizing" the product */
   for(i = 0; i < N; i++)
     ret[i] += s * x[(N+i-1)%N];
+
+  /* "arrow inversion" */
+  x_tmp = x[N-1];
+  MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
+  MPI_Recv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
 #else
   

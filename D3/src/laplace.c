@@ -79,25 +79,23 @@ int main(int argc, char** argv){
   /* randomly filling b vector */
   fill_source(b, 2.2, 0.5, L);
 
-  for(j = 0; j < L; j++)
-    printf("\t%lg\n", b[j]);
-  
-  check_sol = sparse_prod(b, sigma, s, L);
-  printf("\n\tAFTER\n");
+  /* check_sol = sparse_prod(b, sigma, s, L); */
+  sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
+  printf("\n\tSOLUTION\n");
   
   for(j = 0; j < L; j++)
-    printf("\t%lg\n", check_sol[j]);
+    printf("\t%lg\n", f[j]);
   
 #endif /* __MPI */
-  check_sol = sparse_prod(b, sigma, s, L, MyID, NPE);
-  printf("\n\tAFTER\n");
-  
-  for(j = 0; j < L; j++)
-    printf("\t%lg\n", check_sol[j]);
 
-  /* sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it); */
-  
 #ifdef __MPI
+  
+  sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it, MyID, NPE);
+
+  for(j = 0; j < L; j++)
+    printf("\t%lg\n", f[j]);
+  
+
   if(MyID == 0){
     
   check_sol = (double*) malloc(vsize * sizeof(double));
