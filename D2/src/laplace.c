@@ -11,7 +11,7 @@ int main(){
   double r_hat = 1.e-15;
   double sigma = 0.6,  s = -0.5;
   double t_start, t_end;
-  int i, j, n_it, n_rep = 1000;
+  int i, j, n_it, n_rep = 10;
   int L, L_start = 10, L_end = 5e2, L_step = 50;
   FILE* classic;
   FILE* sparse;
@@ -108,8 +108,6 @@ int main(){
     f = (double*) malloc(L * sizeof(double));
     b = (double*) malloc(L * sizeof(double));
     
-    /* init_laplace_matrix(M, sigma, s, L); */
-    
     /* randomly filling b vector */
     fill_source(b, 2.2, 0.5, L);
 
@@ -138,7 +136,6 @@ int main(){
   r_hat = 1.e-8;
   f = (double*) malloc(L * sizeof(double));
   b = (double*) malloc(L * sizeof(double));
-  check_sol = (double*) malloc(L * sizeof(double));
   
   fill_source(b, 2.2, 0.5, L);
   
