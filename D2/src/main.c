@@ -9,11 +9,13 @@ int main(int argc, char** argv){
 
   double r_hat = 1.e-10, cond_numb = 1.e5;
   
-  int N = 2, n_iter, i, j;
+  int N, n_iter, i, j;
+  N = 2;
   
   A = (double*) malloc(N * N * sizeof(double));
   b = (double*) malloc(N * sizeof(double));
   sol = (double*) malloc(N * sizeof(double));
+  check_sol = (double*) malloc(N * sizeof(double));
 
   /* Filling matrix with the assignment values */
   A[0] = 3.;
@@ -28,7 +30,7 @@ int main(int argc, char** argv){
 
   gradient_alg(A, sol, b, r_hat, N, &n_iter);
 
-  check_sol = mat_vec_prod(A, sol, N);
+  mat_vec_prod(A, sol, check_sol, N);
 
   /* trivial solution control  */
   i = 0;
@@ -42,13 +44,11 @@ int main(int argc, char** argv){
   else
     printf("\n\tThe found solution is wrong\n");
 
-  free(check_sol);
-  
   printf("\n\n\tCONJUGATE GRADIENT ALGORITHM\n");
   
   conj_grad_alg(A, sol, b, r_hat, N, &n_iter);
 
-  check_sol = mat_vec_prod(A, sol, N);
+  mat_vec_prod(A, sol, check_sol, N);
 
   /* trivial solution control */
   i = 0;
@@ -75,14 +75,16 @@ int main(int argc, char** argv){
   N = 150;
   cond_numb = 1e5;
   r_hat = 1.e-28;
+
+
   A = (double*) malloc(N * N * sizeof(double));
   b = (double*) malloc(N * sizeof(double));
   sol = (double*) malloc(N * sizeof(double));
+
   fill_defpos_symm_matrix(A, cond_numb, N);
   fill_source(b, 2., 0.5, N);
 
   inner_checks(A, sol, b, r_hat, N, &n_iter);
-  printf("\n\tDONE\n\n");
 
   free(A);
   free(b);

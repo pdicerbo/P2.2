@@ -15,6 +15,7 @@ int main(int argc, char** argv){
   A = (double*) malloc(N * N * sizeof(double));
   b = (double*) malloc(N * sizeof(double));
   sol = (double*) malloc(N * sizeof(double));
+  check_sol = (double*) malloc(N * sizeof(double));
   guess = (double*) malloc(N * sizeof(double));
   A_shift = (double*) malloc(N * N * sizeof(double));
   
@@ -35,11 +36,11 @@ int main(int argc, char** argv){
   
   conj_guess(A, sol, b, guess, r_hat, N, &n_iter);
 
-  check_sol = mat_vec_prod(A, sol, N);
+  mat_vec_prod(A, sol, check_sol, N);
 
   i = 0;
   for(j = 0; j < N; j++){
-    if(abs(sol[j] - check_sol[j]) > 1.e10){
+    if(abs(sol[j] - check_sol[j]) > 1.e-8){
       i = 1;
       break;
     }
