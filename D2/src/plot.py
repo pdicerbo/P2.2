@@ -51,7 +51,8 @@ sig  = data[:,0]
 n_it = data[:,1]
 plt.plot(sig, n_it)
 plt.title("Condition Number Check\nMatrix size = 20000, $\hat{r} = 10^{-8}, \sigma \in [10^{-5}, 0.05]$")
-plt.xlabel("(ConditionNumber)**0.5")
+plt.xlabel("(2./$\sigma$ + 1.)$^{0.5}$")
 plt.ylabel("Number of iteration")
-plt.show()
+plt.savefig("results/cond_numb_check.png")
+plt.close("all")
 
