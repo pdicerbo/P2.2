@@ -23,7 +23,7 @@ int main(int argc, char** argv){
   /* Initialization of the variables needed in the parallelized */
   /* version; each process works on a vector of size L / NumberProcessingElements */
   /* (unless there is a rest, that requires a work redistribution) */
-  int NPE, MyID, MyTag, vsize, rest, l_tmp, count, repet = 1; //00;
+  int NPE, MyID, MyTag, vsize, rest, l_tmp, count;
   double* results_recv;
   int *displ, *recv;
   double tstart, tend;
@@ -96,8 +96,7 @@ int main(int argc, char** argv){
 
   tstart = MPI_Wtime();
 
-  for(j = 0; j < repet; ++j)
-    sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it, MyID, NPE);
+  sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it, MyID, NPE);
 
   tend = MPI_Wtime();
 
@@ -106,7 +105,7 @@ int main(int argc, char** argv){
   
   if(MyID == 0){
     /* STRONG SCALING DATA */
-  /* timing = fopen("results/strong_timing.dat", "a");     */
+  /* timing = fopen("results/strong_timing.dat", "a"); */
   /* fprintf(timing, "%d\t%lg\n", NPE, tend - tstart); */
 
     /* WEAK SCALING */
