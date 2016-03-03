@@ -299,7 +299,14 @@ void sparse_prod(double* x, double* ret, double sigma, double s, int N){
   int MyTag = 42;
   double x_tmp;
   MPI_Request MyReq;
-  
+
+#ifdef __VECTORIZE
+  double* tmp_write = (double*) malloc(N * sizeof(double));
+#endif /* __VECTORIZE */  
+
+#ifdef __VECTORIZE
+#pragma omp simd
+#endif /* __VECTORIZE */
   /* computation of the product of the diagonal elements*/
   for(i = 0; i < N; i++)
     ret[i] = (sigma + 1.) * x[i];
@@ -308,10 +315,23 @@ void sparse_prod(double* x, double* ret, double sigma, double s, int N){
   x_tmp = x[0];
   MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
   MPI_Recv(x, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  
+
+#ifdef __VECTORIZE
+
+  for(i = 0; i < N; i++)
+    tmp_write[i] = x[(i+1)%N];
+
+#pragma omp simd
+  /* updating the product */
+  for(i = 0; i < N; i++)
+    ret[i] += s * tmp_write[i];
+
+#else  
   /* updating the product */
   for(i = 0; i < N; i++)
     ret[i] += s * x[(i+1)%N];
+
+#endif /* __VECTORIZE */
 
   /* "arrow inversion" */
   x_tmp = x[0];
@@ -323,14 +343,32 @@ void sparse_prod(double* x, double* ret, double sigma, double s, int N){
   MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
   MPI_Recv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
+#ifdef __VECTORIZE
+
+  for(i = 0; i < N; i++)
+    tmp_write[i] = x[(N+i-1)%N];
+  
+#pragma omp simd
+  /* "finalizing" the product */
+  for(i = 0; i < N; i++)
+    ret[i] += s * tmp_write[i];
+
+#else
+
   /* "finalizing" the product */
   for(i = 0; i < N; i++)
     ret[i] += s * x[(N+i-1)%N];
+
+#endif /* __VECTORIZE */
 
   /* "arrow inversion" */
   x_tmp = x[N-1];
   MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
   MPI_Recv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+#ifdef __VECTORIZE
+  free(tmp_write);
+#endif /* __VECTORIZE */
 
 #else
   
