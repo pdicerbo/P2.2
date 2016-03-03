@@ -37,4 +37,4 @@ benchmark.o: benchmark.c
 	$(CC) $(CFLAGS) -c $^
 
 clean:
-	rm -rf *.o ../laplace.x
+	rm -rf *.o ../laplace.x ../benchmark.x

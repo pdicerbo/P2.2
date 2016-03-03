@@ -13,7 +13,7 @@ int main(int argc, char** argv){
 
   double *f, *b, *check_sol;
   double r_hat = 1.e-15;
-  double sigma = 2., s = -0.5;
+  double sigma = 0.6, s = -0.5;
   int i, j, n_it, L;
   
   L = 120000; // "full" vector size
@@ -23,8 +23,8 @@ int main(int argc, char** argv){
   /* Initialization of the variables needed in the parallelized */
   /* version; each process works on a vector of size L / NumberProcessingElements */
   /* (unless there is a rest, that requires a work redistribution) */
-  int NPE, MyID, MyTag, vsize, rest, l_tmp, count;
-  double* results_recv;
+  int NPE, MyID, MyTag, vsize, rest, l_tmp;
+  double *results_recv, *b_send;
   int *displ, *recv;
   double tstart, tend;
   FILE* timing;
@@ -34,7 +34,7 @@ int main(int argc, char** argv){
   MPI_Comm_size(MPI_COMM_WORLD, &NPE);
 
   /* FOR WEAK SCALING MEASURE */
-  L *= NPE;
+  /* L *= NPE; */
 
   MyTag = 42;
   vsize = L;
@@ -46,8 +46,9 @@ int main(int argc, char** argv){
 
   /* "initialization" section */
   if(MyID == 0){
+
     f = (double*) malloc(L * sizeof(double));
-    b = (double*) malloc(vsize * sizeof(double));
+    b = (double*) malloc(L * sizeof(double));
 
     /* process 0 generates the random b vector and sends */
     /* various pieces to the other processes */
@@ -55,28 +56,29 @@ int main(int argc, char** argv){
     /* needed to gather the results */
     displ  = (int*) malloc(NPE * sizeof(int));
     recv   = (int*) malloc(NPE * sizeof(int));
+    b_send = (double*) malloc(vsize * sizeof(double));
 
     recv[0] = L;
     displ[0] = 0;
 
-    /* process 0 stores all the b vector in order to check */
-    /* the correctness of the results via "inverse_laplace_operator" function */
-    /* otherwais, when needed, I could also gather all the pieces from the others processes */
-    fill_source(b, 2.2, 0.5, vsize);
+    /* process 0 generates the random b vector and sends */
+    /* various pieces to the other processes */
+    /* while I send data, I initialize also "displs" and "recv" array */
+    /* needed to gather the results */
+    fill_source(b, 2.2, 0.5, L);
 
     /* need use l_tmp because if rest != 0, process 0 have to send bunch */
     /* of array of different size */			      
     l_tmp = L;
-    count = 0;
+    /* count = 0; */
     
     for(j = 1; j < NPE; j++){
       
-      count += l_tmp;      
-
       if(rest != 0 && j == rest)
 	l_tmp--;
       
-      MPI_Send(&b[count], l_tmp, MPI_DOUBLE, j, MyTag, MPI_COMM_WORLD);
+      fill_source(b_send, 2.2, 0.5, l_tmp);
+      MPI_Send(b_send, l_tmp, MPI_DOUBLE, j, MyTag, MPI_COMM_WORLD);
       recv[j] = l_tmp;
       displ[j] = displ[j-1]+recv[j-1]; 
     }
@@ -85,10 +87,12 @@ int main(int argc, char** argv){
   }
   else
     {
+
     f = (double*) malloc(L * sizeof(double));
     b = (double*) malloc(L * sizeof(double));
     /* processes with MyID != 0 receives in b */
     MPI_Recv(b, L, MPI_DOUBLE, 0, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
   }
 
   /* end of the "initialization" section */
@@ -102,15 +106,16 @@ int main(int argc, char** argv){
 
   /* process 0 gather the results and checks the correctness */
   MPI_Gatherv(f, L, MPI_DOUBLE, results_recv, recv, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+  MPI_Gatherv(b, L, MPI_DOUBLE, b_send, recv, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
   if(MyID == 0){
     /* STRONG SCALING DATA */
-  /* timing = fopen("results/strong_timing.dat", "a"); */
-  /* fprintf(timing, "%d\t%lg\n", NPE, tend - tstart); */
+  timing = fopen("results/strong_timing.dat", "a");
+  fprintf(timing, "%d\t%lg\n", NPE, tend - tstart);
 
     /* WEAK SCALING */
-  timing = fopen("results/weak_timing.dat", "a");
-  fprintf(timing, "%d\t%lg\n", vsize, tend - tstart);
+  /* timing = fopen("results/weak_timing.dat", "a"); */
+  /* fprintf(timing, "%d\t%lg\n", vsize, tend - tstart); */
 
   fclose(timing);
   /* check_sol = (double*) malloc(vsize * sizeof(double)); */

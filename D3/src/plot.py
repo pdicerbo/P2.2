@@ -60,7 +60,7 @@ for namef in nfiles:
     elif namef == nfiles[1]:
 
         plt.errorbar(x_real, y_real, yerr=err, label = namef[:-4])
-        plt.title('Scaling obtained with $\hat{r}_{targ} = 10^{-10}$ Matrix Size = 120000 * NPE')
+        plt.title('Scaling obtained with $\hat{r}_{targ} = 10^{-15}$ Matrix Size = 12000 * NPE')
         plt.xlabel('Matrix size')
         plt.ylabel('time (s)')
         plt.savefig("results/second_scaling.png")
