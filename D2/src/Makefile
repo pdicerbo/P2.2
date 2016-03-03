@@ -3,7 +3,7 @@ CC = gcc
 SRC = main.c
 MY_LIBS = random_gen.o system_solvers.o laplace_utils.o
 LIBS=-lm
-CXXFLAGS = -Wall -std=c++11 -O2 
+CXXFLAGS = -Wall -std=c++11 -O2
 CFLAGS = -Wall -O2
 OBJ = $(SRC:%.c=%.o)
 

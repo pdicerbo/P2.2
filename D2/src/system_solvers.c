@@ -168,7 +168,6 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
 /* This function store the result into array x */
 /* The number of iterations is stored into n_iter */
 /* the found solution is stored in x */
-/* void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){ */
 void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double prec, int N, int* n_iter){
 
   int j;
@@ -187,6 +186,7 @@ void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double p
   b_mod_square = vector_prod(b, b, N);
 
   *n_iter = 0;
+  
   r_hat_square = vector_prod(r, r, N) / b_mod_square;
 
   while(r_hat_square > prec * prec){
@@ -207,8 +207,8 @@ void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double p
       p[j] = r[j] + beta * p[j];
 
     r_hat_square = vector_prod(r, r, N) / b_mod_square;
-    free(t);
 
+    free(t);
     (*n_iter)++;
   }
 
@@ -238,7 +238,7 @@ double* mat_vec_prod(double* A, double* x, int N){
 
   double* ret = (double*) calloc(N, sizeof(double));
   int i, j;
-  
+
   for(i = 0; i < N; i++)
     for(j = 0; j < N; j++)
       ret[i] += A[i*N + j] * x[j];
@@ -249,7 +249,7 @@ double* mat_vec_prod(double* A, double* x, int N){
 /* Perform the product between a matrix and a vector */
 /* taking into account that the matrix is sparse */
 double* sparse_prod(double* x, double sigma, double s, int N){
-  double* ret = (double*) calloc(N, sizeof(double));
+  double* ret = (double*) malloc(N * sizeof(double));
   /* int i, j, offset = 0; */
   int i;
   /* first and last entry of the vector are computed "by hand" */

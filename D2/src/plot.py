@@ -44,3 +44,14 @@ plt.xlabel("Matrix Size")
 plt.ylabel("time (s)")
 plt.legend(bbox_to_anchor = (0.26,1.))
 plt.savefig("results/timing.png")
+plt.close("all")
+
+data = np.loadtxt("results/cond_numb_check.dat")
+sig  = data[:,0]
+n_it = data[:,1]
+plt.plot(sig, n_it)
+plt.title("Condition Number Check\nMatrix size = 20000, $\hat{r} = 10^{-8}, \sigma \in [10^{-5}, 0.05]$")
+plt.xlabel("(ConditionNumber)**0.5")
+plt.ylabel("Number of iteration")
+plt.show()
+

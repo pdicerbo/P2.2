@@ -56,39 +56,39 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
   double *r = (double*) malloc(N * sizeof(double));
   double *p = (double*) malloc(N * sizeof(double));
   double *t;
-  double *r_old = (double*) malloc(N * sizeof(double));
-  double r_hat_square, alpha, beta;
+  double r_hat_square, alpha, beta, b_mod_square, r_mod_prev;
   
   /* arrays initialization */
   for(j = 0; j < N; j++){
     x[j] = 0.;
-    r_old[j] = b[j];
+    r[j] = b[j];
     p[j] = b[j];
   }
 
+  b_mod_square = vector_prod(b, b, N);
+  
   *n_iter = 0;
-  r_hat_square = vector_prod(r_old, r_old, N);
-  r_hat_square /= vector_prod(b, b, N);
+  r_hat_square = vector_prod(r, r, N);
+  r_hat_square /= b_mod_square;
 
   while(r_hat_square > prec * prec){
     t = mat_vec_prod(A, p, N);
-    alpha = vector_prod(r_old, r_old, N);
+    alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
+    r_mod_prev = vector_prod(r, r, N);
+    
     for(j = 0; j < N; j++){
       x[j] += alpha * p[j];
-      r[j] = r_old[j] - alpha * t[j];
+      r[j] -= alpha * t[j];
     }
 
-    beta = vector_prod(r, r, N);
-    beta /= vector_prod(r_old, r_old, N);
+    beta = vector_prod(r, r, N) / r_mod_prev;
 
-    for(j = 0; j < N; j++){
+    for(j = 0; j < N; j++)
       p[j] = r[j] + beta * p[j];
-      r_old[j] = r[j];
-    }
-    r_hat_square = vector_prod(r_old, r_old, N);
-    r_hat_square /= vector_prod(b, b, N);
+
+    r_hat_square = vector_prod(r, r, N) / b_mod_square;
     free(t);
 
     (*n_iter)++;
@@ -96,7 +96,6 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
 
   free(r);
   free(p);
-  free(r_old);
 }
 
 /* Perform the product between two vector of length N */

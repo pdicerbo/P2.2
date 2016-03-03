@@ -9,7 +9,7 @@ int main(){
 
   double *M, *f, *b, *check_sol, *eigenv;
   double r_hat = 1.e-15;
-  double sigma = 0.6, D = 1., s = -0.5;
+  double sigma = 0.6,  s = -0.5;
   double t_start, t_end;
   int i, j, n_it, n_rep = 1000;
   int L, L_start = 10, L_end = 5e2, L_step = 50;
@@ -105,11 +105,10 @@ int main(){
   sparse = fopen("results/sparse_timing.dat", "w");
 
   for(L = L_start; L < L_end; L += L_step){
-    M = (double*) malloc(L * L * sizeof(double));
     f = (double*) malloc(L * sizeof(double));
     b = (double*) malloc(L * sizeof(double));
     
-    init_laplace_matrix(M, sigma, s, L);
+    /* init_laplace_matrix(M, sigma, s, L); */
     
     /* randomly filling b vector */
     fill_source(b, 2.2, 0.5, L);
@@ -124,7 +123,6 @@ int main(){
     fprintf(sparse, "%d\t%lg\n", L, t_end - t_start);
     fprintf(stderr, "\t%d\t%lg\n", L, t_end - t_start);
     
-    free(M);
     free(f);
     free(b);
   }
@@ -132,17 +130,29 @@ int main(){
   fclose(sparse);
 
   /* CHECK CONDITION NUMBER */
-  L = 6;
-  eigenv = (double*) malloc(L * sizeof(double));
+
+  fprintf(stderr, "\n\tCondition number section\n\n");
+  sparse = fopen("results/cond_numb_check.dat", "w");
+
+  L = 20000;
+  r_hat = 1.e-8;
+  f = (double*) malloc(L * sizeof(double));
+  b = (double*) malloc(L * sizeof(double));
+  check_sol = (double*) malloc(L * sizeof(double));
   
-  compute_eigenvalues(eigenv, sigma, L);
+  fill_source(b, 2.2, 0.5, L);
+  
+  for(sigma = 0.05; sigma > 1.e-5; sigma *= 0.5){
 
-  printf("\n\tPrinting the eigenvalues for matrix with size %d and sigma = %lg\n\n", L, sigma);
-  for(j = 0; j < L; j++)
-    printf("\t%lg\n", eigenv[j]);
+    sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it);
 
-  printf("\n");
-  free(eigenv);
+    fprintf(sparse, "%lg\t%d\n", pow((2./sigma + 1.), 0.5), n_it);
+  }
+
+  free(f);
+  free(b);
+  
+  fclose(sparse);
   
   return 0;
 }
