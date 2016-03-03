@@ -171,8 +171,6 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
 /* This function store the result into array x */
 /* The number of iterations is stored into n_iter */
 /* the found solution is stored in x */
-/* void sparse_conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_iter){ */
-
 #ifdef __MPI
 
 void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double prec, int N, int* n_iter, int MyID, int NPE){
@@ -338,7 +336,7 @@ void sparse_prod(double* x, double* ret, double sigma, double s, int N){
   
   /* first and last entry of the vector are computed "by hand" */
   ret[0] = (sigma + 1.) * x[0] + s * x[1] + s * x[N - 1];
-  
+
   for(i = 1; i < N - 1; i++)
     ret[i] = s * x[i - 1] + (sigma + 1.) * x[i] + s * x[i + 1];
 
