@@ -33,6 +33,9 @@ int main(int argc, char** argv){
   MPI_Comm_rank(MPI_COMM_WORLD, &MyID);
   MPI_Comm_size(MPI_COMM_WORLD, &NPE);
 
+  /* FOR WEAK SCALING MEASURE */
+  L *= NPE;
+
   MyTag = 42;
   vsize = L;
   L /= NPE;
@@ -102,8 +105,14 @@ int main(int argc, char** argv){
   MPI_Gatherv(f, L, MPI_DOUBLE, results_recv, recv, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
   if(MyID == 0){
-  timing = fopen("results/strong_timing.dat", "a");    
-  fprintf(timing, "%d\t%lg\n", NPE, tend - tstart);
+    /* STRONG SCALING DATA */
+  /* timing = fopen("results/strong_timing.dat", "a");     */
+  /* fprintf(timing, "%d\t%lg\n", NPE, tend - tstart); */
+
+    /* WEAK SCALING */
+  timing = fopen("results/weak_timing.dat", "a");
+  fprintf(timing, "%d\t%lg\n", vsize, tend - tstart);
+
   fclose(timing);
   /* check_sol = (double*) malloc(vsize * sizeof(double)); */
   /* inverse_laplace_operator(check_sol, b, sigma, vsize, vsize); */
