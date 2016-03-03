@@ -12,8 +12,8 @@
 int main(int argc, char** argv){
 
   double *f, *b, *check_sol;
-  double r_hat = 1.e-8;
-  double sigma = 0.6, s = -0.5;
+  double r_hat = 1.e-15;
+  double sigma = 2., s = -0.5;
   int i, j, n_it, L;
   
   L = 120000; // "full" vector size
@@ -102,7 +102,7 @@ int main(int argc, char** argv){
   MPI_Gatherv(f, L, MPI_DOUBLE, results_recv, recv, displ, MPI_DOUBLE, 0, MPI_COMM_WORLD);
   
   if(MyID == 0){
-  timing = fopen("results/weak_timing.dat", "a");    
+  timing = fopen("results/strong_timing.dat", "a");    
   fprintf(timing, "%d\t%lg\n", NPE, tend - tstart);
   fclose(timing);
   /* check_sol = (double*) malloc(vsize * sizeof(double)); */

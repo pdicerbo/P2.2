@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-nfiles = ["results/weak_timing.dat"]
+nfiles = ["results/weak_timing.dat"] #results/strong_timing.dat
 rep = 10     # number of repetition per measure, set in top of src/main.c
 
 for namef in nfiles:
@@ -51,7 +51,7 @@ for namef in nfiles:
 
         plt.errorbar(x_real, y_real[0]/y_real, yerr=err, label = namef[:-4])
         plt.errorbar(x_real, x_real, yerr=err, label = namef[:-4])
-        plt.title('Scaling for MPI version with $\hat{r}_{targ} = 10^{-10}$ and Matrix Size = 60000')
+        plt.title('Scaling for MPI version with $\hat{r}_{targ} = 10^{-15}$ and Matrix Size = 120000')
         plt.xlabel('NPE')
         plt.ylabel('Speedup')
         plt.savefig("results/first_scaling.png")
