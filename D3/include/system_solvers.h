@@ -7,12 +7,12 @@ extern "C"{
 
 void gradient_alg(double*, double*, double*, double, int, int*);
 double vector_prod(double*, double*, int);
-double* mat_vec_prod(double*, double*, int);
+void mat_vec_prod(double*, double*, double*, int);
 #ifdef __MPI
-double* sparse_prod(double*, double, double, int, int, int);
+void sparse_prod(double*, double*, double, double, int, int, int);
 void sparse_conj_grad_alg(double*, double*, double, double, double, int, int*, int, int);
 #else
-double* sparse_prod(double*, double, double, int);
+void sparse_prod(double*, double*, double, double, int);
 void sparse_conj_grad_alg(double*, double*, double, double, double, int, int*);
 #endif
 void conj_grad_alg(double*, double*, double*, double, int, int*);

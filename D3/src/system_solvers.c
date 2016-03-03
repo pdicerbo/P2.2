@@ -20,6 +20,7 @@ void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_it
   int j;
 
   r = (double*) malloc(N * sizeof(double));
+  t = (double*) malloc(N * sizeof(double));
 
   for(j = 0; j < N; j++){
     x[j] = 0.;
@@ -32,7 +33,7 @@ void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_it
 
   /* avoid the square root calculation in the condition within the while */
   while(r_hat_square > prec * prec){
-    t = mat_vec_prod(A, r, N);
+    mat_vec_prod(A, r, t, N);
     alpha = vector_prod(r, r, N);
     alpha /= vector_prod(r, t, N);
 
@@ -45,11 +46,11 @@ void gradient_alg(double* A, double* x, double* b, double prec, int N, int* n_it
     r_hat_square = vector_prod(r, r, N);
     r_hat_square /= vector_prod(b, b, N);
     (*n_iter)++;
-    free(t);
   }
 
   /* deallocate pointers */
-  free(r);  
+  free(r);
+  free(t);
 }
 
 /* Perform the CONJUGATE GRADIENT ALGORITHM to obtain */
@@ -62,7 +63,7 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
   int j;
   double *r = (double*) malloc(N * sizeof(double));
   double *p = (double*) malloc(N * sizeof(double));
-  double *t;
+  double *t = (double*) malloc(N * sizeof(double));
   double r_hat_square, alpha, beta, b_mod_square, r_mod_prev;
   
   /* arrays initialization */
@@ -79,7 +80,7 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
   r_hat_square /= b_mod_square;
 
   while(r_hat_square > prec * prec){
-    t = mat_vec_prod(A, p, N);
+    mat_vec_prod(A, p, t, N);
     alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
@@ -96,13 +97,13 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
       p[j] = r[j] + beta * p[j];
 
     r_hat_square = vector_prod(r, r, N) / b_mod_square;
-    free(t);
 
     (*n_iter)++;
   }
 
   free(r);
   free(p);
+  free(t);
 }
 
 /* Perform the CONJUGATE GRADIENT ALGORITHM to obtain */
@@ -115,11 +116,11 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
   int j;
   double *r = (double*) malloc(N * sizeof(double));
   double *p = (double*) malloc(N * sizeof(double));
-  double *t;
+  double *t = (double*) malloc(N * sizeof(double));
   double r_hat_square, alpha, beta, b_mod_square, r_mod_prev;
 
   /* calculation of the A x_guess */
-  t = mat_vec_prod(A, guess, N);
+  mat_vec_prod(A, guess, t, N);
   
   /* arrays initialization */
   for(j = 0; j < N; j++){
@@ -127,8 +128,6 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
     r[j] = b[j] - t[j];
     p[j] = b[j] - t[j];
   }
-
-  free(t);
   
   b_mod_square = vector_prod(p, p, N);
   
@@ -137,7 +136,7 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
   r_hat_square /= b_mod_square;
 
   while(r_hat_square > prec * prec){
-    t = mat_vec_prod(A, p, N);
+    mat_vec_prod(A, p, t, N);
     alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
@@ -154,7 +153,6 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
       p[j] = r[j] + beta * p[j];
 
     r_hat_square = vector_prod(r, r, N) / b_mod_square;
-    free(t);
 
     (*n_iter)++;
   }
@@ -165,6 +163,7 @@ void conj_guess(double* A, double* x, double* b, double* guess, double prec, int
     
   free(r);
   free(p);
+  free(t);
 }
 
 /* Perform the CONJUGATE GRADIENT ALGORITHM with the **sparse_prod** function to obtain */
@@ -187,7 +186,7 @@ void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double p
   int j;
   double *r = (double*) malloc(N * sizeof(double));
   double *p = (double*) malloc(N * sizeof(double));
-  double *t;
+  double *t = (double*) malloc(N * sizeof(double));
   double r_hat_square, alpha, beta, b_mod_square, r_mod_prev;
   
   /* arrays initialization */
@@ -207,11 +206,11 @@ void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double p
 
 #ifdef __MPI
 
-    t = sparse_prod(p, sigma, s, N, MyID, NPE);
+    sparse_prod(p, t, sigma, s, N, MyID, NPE);
 
 #else
 
-    t = sparse_prod(p, sigma, s, N);
+    sparse_prod(p, t, sigma, s, N);
     
 #endif /* __MPI */
 
@@ -231,13 +230,13 @@ void sparse_conj_grad_alg(double* x, double* b, double sigma, double s, double p
       p[j] = r[j] + beta * p[j];
 
     r_hat_square = vector_prod(r, r, N) / b_mod_square;
-    free(t);
 
     (*n_iter)++;
   }
 
   free(r);
   free(p);
+  free(t);
 }
 
 /* Perform the product between two vector of length N */
@@ -270,31 +269,32 @@ double vector_prod(double* x, double* y, int N){
 /* (A x)_i = \sum_j A_ij x_j */
 /* this function return a pointer to the memory area */
 /* that contain the result of the operation (array of size N) */
-double* mat_vec_prod(double* A, double* x, int N){
+void mat_vec_prod(double* A, double* x, double* ret, int N){
 
-  double* ret = (double*) calloc(N, sizeof(double));
+  double tmp = 0.;
   int i, j;
   
-  for(i = 0; i < N; i++)
-    for(j = 0; j < N; j++)
-      ret[i] += A[i*N + j] * x[j];
-
-  return ret;
+  for(i = 0; i < N; i++){
+    for(j = 0; j < N; j++){
+      tmp += A[i*N + j] * x[j];
+    }
+    ret[i] = tmp;
+    tmp = 0.;
+  }
 }
 
 /* Perform the product between a matrix and a vector */
 /* taking into account that the matrix is sparse */
 #ifdef __MPI
 
-double* sparse_prod(double* x, double sigma, double s, int N, int MyID, int NPE){
+void sparse_prod(double* x, double* ret, double sigma, double s, int N, int MyID, int NPE){
 
 #else
 
-double* sparse_prod(double* x, double sigma, double s, int N){
+void sparse_prod(double* x, double* ret, double sigma, double s, int N){
 
 #endif /* __MPI */
 
-  double* ret = (double*) calloc(N, sizeof(double));
   int i;
 
 #ifdef __MPI
@@ -345,8 +345,6 @@ double* sparse_prod(double* x, double sigma, double s, int N){
   ret[N - 1] = s * x[0] + s * x[N - 2] + (sigma + 1.) * x[N - 1];
   
 #endif /* __MPI */
-  
-  return ret;
 }
 
 /* This function perform "inner" checks. The first is the calculation */
@@ -369,6 +367,8 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
 
   r = (double*) malloc(N * sizeof(double));
   p = (double*) malloc(N * sizeof(double));
+  t = (double*) malloc(N * sizeof(double));
+  tmp = (double*) malloc(N * sizeof(double));
   r_explicit = (double*) malloc(N * sizeof(double));
   
   min_check = fopen("results/min_check_conj.dat", "w");
@@ -386,7 +386,7 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
   r_hat_square = vector_prod(r, r, N) / mod_b_square;
 
   while(r_hat_square > prec * prec){
-    t = mat_vec_prod(A, p, N);
+    mat_vec_prod(A, p, t, N);
     alpha = vector_prod(r, r, N);
     alpha /= vector_prod(p, t, N);
 
@@ -407,15 +407,14 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
     (*n_iter)++;
 
     /* calculation of F(x) = 0.5 * x^T A x - b x */
-    tmp = mat_vec_prod(A, x, N);
+    mat_vec_prod(A, x, tmp, N);
     Fx = 0.5 * vector_prod(x, tmp, N);
     Fx -= vector_prod(b, x, N);
 
     fprintf(min_check, "%d\t%lg\n", *n_iter, Fx);
-    free(t);
     
     /* calculation of explicit residue */
-    t = mat_vec_prod(A, x, N);
+    mat_vec_prod(A, x, t, N);
 
     // Storing in r_explicit directly the differenece between r_expl and r_impl 
     for(j = 0; j < N; j++)
@@ -424,10 +423,7 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
     // Compute the modulus of the r_explicit vector and store it
     r_e = pow(vector_prod(r_explicit, r_explicit, N) / mod_b_square, 0.5);
 
-    fprintf(explicit, "%d\t%lg\t%lg\n", *n_iter, r_e, pow(vector_prod(r, r, N) / mod_b_square, 0.5));
-    
-    free(t);
-    free(tmp);
+    fprintf(explicit, "%d\t%lg\t%lg\n", *n_iter, r_e, pow(vector_prod(r, r, N) / mod_b_square, 0.5));    
   }
   
   fclose(min_check);
@@ -435,5 +431,7 @@ void inner_checks(double* A, double* x, double* b, double prec, int N, int* n_it
   
   free(r);
   free(p);
+  free(t);
+  free(tmp);
   free(r_explicit);
 }
