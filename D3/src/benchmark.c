@@ -70,7 +70,6 @@ int main(int argc, char** argv){
     /* need use l_tmp because if rest != 0, process 0 have to send bunch */
     /* of array of different size */			      
     l_tmp = L;
-    /* count = 0; */
     
     for(j = 1; j < NPE; j++){
       
@@ -79,6 +78,7 @@ int main(int argc, char** argv){
       
       fill_source(b_send, 2.2, 0.5, l_tmp);
       MPI_Send(b_send, l_tmp, MPI_DOUBLE, j, MyTag, MPI_COMM_WORLD);
+
       recv[j] = l_tmp;
       displ[j] = displ[j-1]+recv[j-1]; 
     }
@@ -118,17 +118,6 @@ int main(int argc, char** argv){
   /* fprintf(timing, "%d\t%lg\n", vsize, tend - tstart); */
 
   fclose(timing);
-  /* check_sol = (double*) malloc(vsize * sizeof(double)); */
-  /* inverse_laplace_operator(check_sol, b, sigma, vsize, vsize); */
-
-  /* /\* printf("\n\tSparse solution:  Check_sol:\n"); *\/ */
-  /* i = 0; */
-
-  /* for(j = 0; j < vsize; j++){ */
-  /*   /\* printf("\t%lg\t\t  %lg\n", results_recv[j], check_sol[j]); *\/ */
-  /*   if(abs(results_recv[j] - check_sol[j]) > 1.e-6) */
-  /*     i = 1; */
-  /* } */
 
   if(i == 0)
     printf("\n\tThe found solution is correct\n");
@@ -181,6 +170,7 @@ int main(int argc, char** argv){
     free(results_recv);
     free(displ);
     free(recv);
+    free(b_send);)
 #endif /* __MPI */
 
   free(check_sol);
