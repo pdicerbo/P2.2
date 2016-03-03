@@ -16,14 +16,14 @@ int main(int argc, char** argv){
   double sigma = 0.6, s = -0.5;
   int i, j, n_it, L;
   
-  L = 60000; // "full" vector size
+  L = 120000; // "full" vector size
 
 #ifdef __MPI
 
   /* Initialization of the variables needed in the parallelized */
   /* version; each process works on a vector of size L / NumberProcessingElements */
   /* (unless there is a rest, that requires a work redistribution) */
-  int NPE, MyID, MyTag, vsize, rest, l_tmp, count, repet = 100;
+  int NPE, MyID, MyTag, vsize, rest, l_tmp, count, repet = 1; //00;
   double* results_recv;
   int *displ, *recv;
   double tstart, tend;
