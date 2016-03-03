@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-nfiles = ["results/weak_timing.dat"]#, "results/sec_scaling.safe"]
+nfiles = ["results/weak_timing.dat"]
 rep = 10     # number of repetition per measure, set in top of src/main.c
 
 for namef in nfiles:
