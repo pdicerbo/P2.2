@@ -23,7 +23,7 @@ int main(int argc, char** argv){
   /* Initialization of the variables needed in the parallelized */
   /* version; each process works on a vector of size L / NumberProcessingElements */
   /* (unless there is a rest, that requires a work redistribution) */
-  int NPE, MyID, MyTag, vsize, rest, l_tmp, repet = 100;
+  int NPE, MyID, MyTag, vsize, rest, l_tmp, repet = 1;
   double *results_recv, *b_send;
   int *displ, *recv;
   double tstart, tend;
@@ -34,7 +34,7 @@ int main(int argc, char** argv){
   MPI_Comm_size(MPI_COMM_WORLD, &NPE);
 
   /* FOR WEAK SCALING MEASURE */
-  /* L *= NPE; */
+  L *= NPE;
 
   MyTag = 42;
   vsize = L;
@@ -111,12 +111,12 @@ int main(int argc, char** argv){
   
   if(MyID == 0){
     /* STRONG SCALING DATA */
-  timing = fopen("results/strong_timing.dat", "a");
-  fprintf(timing, "%d\t%lg\n", NPE, tend - tstart);
+  /* timing = fopen("results/strong_timing.dat", "a"); */
+  /* fprintf(timing, "%d\t%lg\n", NPE, tend - tstart); */
 
     /* WEAK SCALING */
-  /* timing = fopen("results/weak_timing.dat", "a"); */
-  /* fprintf(timing, "%d\t%lg\n", vsize, tend - tstart); */
+  timing = fopen("results/weak_timing.dat", "a");
+  fprintf(timing, "%d\t%lg\n", vsize, tend - tstart);
 
   fclose(timing);
 
