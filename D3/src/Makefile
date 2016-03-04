@@ -12,8 +12,8 @@ all: default
 default: ../laplace.x
 default: ../benchmark.x
 
-parallel: CXXFLAGS += -D__MPI #-D__VECTORIZE
-parallel: CFLAGS += -D__MPI #-D__VECTORIZE
+parallel: CXXFLAGS += -D__MPI #-D__VECTORIZE -ftree-vectorize -ftree-vectorizer-verbose=9 -ffast-math
+parallel: CFLAGS += -D__MPI #-D__VECTORIZE -ftree-vectorize -ftree-vectorizer-verbose=9 -ffast-math
 parallel: CXX = mpicxx
 parallel: CC = mpicc
 parallel: default

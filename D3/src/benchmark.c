@@ -23,7 +23,7 @@ int main(int argc, char** argv){
   /* Initialization of the variables needed in the parallelized */
   /* version; each process works on a vector of size L / NumberProcessingElements */
   /* (unless there is a rest, that requires a work redistribution) */
-  int NPE, MyID, MyTag, vsize, rest, l_tmp;
+  int NPE, MyID, MyTag, vsize, rest, l_tmp, repet = 100;
   double *results_recv, *b_send;
   int *displ, *recv;
   double tstart, tend;
@@ -99,8 +99,9 @@ int main(int argc, char** argv){
   /* Finally, we performs the calculation and checks the results */  
 
   tstart = MPI_Wtime();
-
-  sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it, MyID, NPE);
+  
+  for(j = 0; j < repet; j++)
+    sparse_conj_grad_alg(f, b, sigma, s, r_hat, L, &n_it, MyID, NPE);
 
   tend = MPI_Wtime();
 
@@ -170,7 +171,7 @@ int main(int argc, char** argv){
     free(results_recv);
     free(displ);
     free(recv);
-    free(b_send);)
+    free(b_send);
 #endif /* __MPI */
 
   free(check_sol);

@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-nfiles = ["results/strong_timing.dat", "results/weak_timing.dat"]
+# nfiles = ["results/strong_timing.dat", "results/weak_timing.dat"]
+nfiles = ["results/strong_timing.safe", "results/strong_timing.vec", "results/weak_timing.safe", "results/weak_timing.vec"]
 rep = 10     # number of repetition per measure, set in top of src/main.c
 
 for namef in nfiles:
@@ -44,24 +45,50 @@ for namef in nfiles:
         count += 1
         i += 1
         j = 0
-        
-    plt.figure()
-
+      
     if namef == nfiles[0]:
+        nproc = np.copy(x_real)
+        strong = np.copy(y_real)
+        s_err = np.copy(err)
 
-        plt.errorbar(x_real, y_real[0]/y_real, yerr=err, label = namef[:-4])
-        plt.errorbar(x_real, x_real, yerr=err, label = namef[:-4])
-        plt.title('Strong Scaling\nfor MPI version with $\hat{r}_{targ} = 10^{-15}$ and Matrix Size = 120000')
-        plt.xlabel('NPE')
-        plt.ylabel('Speedup')
-        plt.savefig("results/first_scaling.png")
-        plt.close('all')
+    if namef == nfiles[1]:
+        strong_v = np.copy(y_real)
+        sv_err = np.copy(err)
 
-    elif namef == nfiles[1]:
+    if namef == nfiles[2]:
+        sizem = np.copy(x_real)
+        weak = np.copy(y_real)
+        w_err = np.copy(err)
 
-        plt.errorbar(x_real, y_real, yerr=err, label = namef[:-4])
-        plt.title('Scaling obtained with $\hat{r}_{targ} = 10^{-15}$ Matrix Size = 12000 * NPE')
-        plt.xlabel('Matrix size')
-        plt.ylabel('time (s)')
-        plt.savefig("results/second_scaling.png")
-        plt.close('all')
+    if namef == nfiles[3]:
+        weak_v = np.copy(y_real)
+        wv_err = np.copy(err)
+
+
+plt.errorbar(nproc, strong[0]/strong, yerr=s_err, label = "normal")
+plt.errorbar(nproc, strong_v[0]/strong_v, yerr=sv_err, label = "vect")
+plt.errorbar(nproc, nproc, yerr=err, label = "linear")
+plt.title('Strong Scaling\nfor MPI version with $\hat{r}_{targ} = 10^{-15}$ and Matrix Size = 120000')
+plt.xlabel('NPE')
+plt.ylabel('Speedup')
+plt.legend()
+plt.savefig("results/first_scaling.png")
+plt.close('all')
+
+plt.errorbar(nproc, strong, yerr=s_err, label = "normal")
+plt.errorbar(nproc, strong_v, yerr=sv_err, label = "vect")
+plt.title('Execution time\nfor MPI version with $\hat{r}_{targ} = 10^{-15}$ and Matrix Size = 120000')
+plt.xlabel('NPE')
+plt.ylabel('time (s)')
+plt.legend()
+plt.savefig("results/exec_time.png")
+plt.close('all')
+
+plt.errorbar(sizem, weak, yerr=w_err, label = "normal")
+# plt.errorbar(sizem, weak_v, yerr=wv_err, label = "vect")
+plt.title('Scaling obtained with $\hat{r}_{targ} = 10^{-15}$ Matrix Size = 12000 * NPE')
+plt.xlabel('Matrix Size')
+plt.ylabel('time (s)')
+# plt.legend()
+plt.savefig("results/second_scaling.png")
+plt.close('all')
