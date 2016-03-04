@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-# nfiles = ["results/strong_timing.dat", "results/weak_timing.dat"]
-nfiles = ["results/strong_timing.safe", "results/strong_timing.vec", "results/weak_timing.safe", "results/weak_timing.vec"]
+# nfiles = ["results/strong_timing.safe", "results/strong_timing.vec", "results/weak_timing.dat", "results/weak_timing.vec"]
+nfiles = ["results/strong_timing.opt", "results/strong_timing.dat", "results/weak_timing.dat", "results/weak_timing.vec"]
 rep = 10     # number of repetition per measure, set in top of src/main.c
 
 for namef in nfiles:
@@ -68,7 +68,7 @@ for namef in nfiles:
 plt.errorbar(nproc, strong[0]/strong, yerr=s_err, label = "normal")
 plt.errorbar(nproc, strong_v[0]/strong_v, yerr=sv_err, label = "vect")
 plt.errorbar(nproc, nproc, yerr=err, label = "linear")
-plt.title('Strong Scaling\nfor MPI version with $\hat{r}_{targ} = 10^{-15}$ and Matrix Size = 120000')
+plt.title('Strong Scaling\nfor MPI version with $\hat{r}_{targ} = 10^{-15}$ and Matrix Size = 1.2$\cdot 10^5$')
 plt.xlabel('NPE')
 plt.ylabel('Speedup')
 plt.legend()
@@ -77,7 +77,7 @@ plt.close('all')
 
 plt.errorbar(nproc, strong, yerr=s_err, label = "normal")
 plt.errorbar(nproc, strong_v, yerr=sv_err, label = "vect")
-plt.title('Execution time\nfor MPI version with $\hat{r}_{targ} = 10^{-15}$ and Matrix Size = 120000')
+plt.title('Execution time\nfor MPI version with $\hat{r}_{targ} = 10^{-15}$ and Matrix Size = 1.2$\cdot 10^5$')
 plt.xlabel('NPE')
 plt.ylabel('time (s)')
 plt.legend()

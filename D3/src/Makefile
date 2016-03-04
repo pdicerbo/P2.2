@@ -2,9 +2,9 @@ CXX = g++
 CC = gcc
 SRC = laplace.c
 MY_LIBS = random_gen.o system_solvers.o laplace_utils.o
-LIBS=-lm -fopenmp
-CXXFLAGS = -Wall -std=c++11 -O2 -fopenmp
-CFLAGS = -Wall -O2 -fopenmp
+LIBS= #-lm -fopenmp
+CXXFLAGS = -Wall -O2 #-std=c++11 -O2
+CFLAGS = -Wall -O2
 OBJ = $(SRC:%.c=%.o)
 
 all: default
@@ -12,8 +12,8 @@ all: default
 default: ../laplace.x
 default: ../benchmark.x
 
-parallel: CXXFLAGS += -D__MPI #-D__VECTORIZE -ftree-vectorize -ftree-vectorizer-verbose=9 -ffast-math
-parallel: CFLAGS += -D__MPI #-D__VECTORIZE -ftree-vectorize -ftree-vectorizer-verbose=9 -ffast-math
+parallel: CXXFLAGS += -D__MPI -D__VECTORIZE #-no-vec -vec-report
+parallel: CFLAGS += -D__MPI -D__VECTORIZE #-no-vec -vec-report
 parallel: CXX = mpicxx
 parallel: CC = mpicc
 parallel: default

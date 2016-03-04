@@ -106,66 +106,6 @@ void conj_grad_alg(double* A, double* x, double* b, double prec, int N, int* n_i
   free(t);
 }
 
-/* Perform the CONJUGATE GRADIENT ALGORITHM to obtain */
-/* the solution of the system "A x = b" with relative error "prec"*/
-/* This function store the result into array x */
-/* The number of iterations is stored into n_iter */
-/* the found solution is stored in x */
-void conj_guess(double* A, double* x, double* b, double* guess, double prec, int N, int* n_iter){
-
-  int j;
-  double *r = (double*) malloc(N * sizeof(double));
-  double *p = (double*) malloc(N * sizeof(double));
-  double *t = (double*) malloc(N * sizeof(double));
-  double r_hat_square, alpha, beta, b_mod_square, r_mod_prev;
-
-  /* calculation of the A x_guess */
-  mat_vec_prod(A, guess, t, N);
-  
-  /* arrays initialization */
-  for(j = 0; j < N; j++){
-    x[j] = 0.;
-    r[j] = b[j] - t[j];
-    p[j] = b[j] - t[j];
-  }
-  
-  b_mod_square = vector_prod(p, p, N);
-  
-  *n_iter = 0;
-  r_hat_square = vector_prod(r, r, N);
-  r_hat_square /= b_mod_square;
-
-  while(r_hat_square > prec * prec){
-    mat_vec_prod(A, p, t, N);
-    alpha = vector_prod(r, r, N);
-    alpha /= vector_prod(p, t, N);
-
-    r_mod_prev = vector_prod(r, r, N);
-    
-    for(j = 0; j < N; j++){
-      x[j] += alpha * p[j];
-      r[j] -= alpha * t[j];
-    }
-
-    beta = vector_prod(r, r, N) / r_mod_prev;
-
-    for(j = 0; j < N; j++)
-      p[j] = r[j] + beta * p[j];
-
-    r_hat_square = vector_prod(r, r, N) / b_mod_square;
-
-    (*n_iter)++;
-  }
-
-  /* "removing" x_guess: x = x_guess + \Delta x */
-  for(j = 0; j < N; j++)
-    x[j] += guess[j];
-    
-  free(r);
-  free(p);
-  free(t);
-}
-
 /* Perform the CONJUGATE GRADIENT ALGORITHM with the **sparse_prod** function to obtain */
 /* the solution of the system "A x = b" with relative error "prec"*/
 /* This function store the result into array x */
@@ -304,29 +244,24 @@ void sparse_prod(double* x, double* ret, double sigma, double s, int N){
   double* tmp_write = (double*) malloc(N * sizeof(double));
 #endif /* __VECTORIZE */  
 
-#ifdef __VECTORIZE
-#pragma omp simd
-#endif /* __VECTORIZE */
   /* computation of the product of the diagonal elements*/
   for(i = 0; i < N; i++)
     ret[i] = (sigma + 1.) * x[i];
 
-  /* "up shifting" */
-  x_tmp = x[0];
-  MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
-  MPI_Recv(x, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(x, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, &x_tmp, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  x[0] = x_tmp;
 
 #ifdef __VECTORIZE
 
   for(i = 0; i < N; i++)
     tmp_write[i] = x[(i+1)%N];
 
-#pragma omp simd
   /* updating the product */
   for(i = 0; i < N; i++)
     ret[i] += s * tmp_write[i];
 
 #else  
+
   /* updating the product */
   for(i = 0; i < N; i++)
     ret[i] += s * x[(i+1)%N];
@@ -334,21 +269,18 @@ void sparse_prod(double* x, double* ret, double sigma, double s, int N){
 #endif /* __VECTORIZE */
 
   /* "arrow inversion" */
-  x_tmp = x[0];
-  MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
-  MPI_Recv(x, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(x, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, &x_tmp, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  x[0] = x_tmp;
 
   /* "down shifting" */
-  x_tmp = x[N-1];
-  MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
-  MPI_Recv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, &x_tmp, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  x[N-1] = x_tmp;
 
 #ifdef __VECTORIZE
 
   for(i = 0; i < N; i++)
     tmp_write[i] = x[(N+i-1)%N];
   
-#pragma omp simd
   /* "finalizing" the product */
   for(i = 0; i < N; i++)
     ret[i] += s * tmp_write[i];
@@ -362,9 +294,8 @@ void sparse_prod(double* x, double* ret, double sigma, double s, int N){
 #endif /* __VECTORIZE */
 
   /* "arrow inversion" */
-  x_tmp = x[N-1];
-  MPI_Isend(&x_tmp, 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, MPI_COMM_WORLD, &MyReq);
-  MPI_Recv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  MPI_Sendrecv(&(x[N-1]), 1, MPI_DOUBLE, (MyID+NPE-1)%NPE, MyTag, &x_tmp, 1, MPI_DOUBLE, (MyID+1)%NPE, MyTag, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  x[N-1] = x_tmp;
 
 #ifdef __VECTORIZE
   free(tmp_write);
