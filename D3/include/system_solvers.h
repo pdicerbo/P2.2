@@ -17,7 +17,6 @@ void sparse_conj_grad_alg(double*, double*, double, double, double, int, int*);
 #endif
 void conj_grad_alg(double*, double*, double*, double, int, int*);
 void inner_checks(double* , double*, double*, double, int, int*);
-void conj_guess(double*, double*, double*, double*, double, int, int*);
 
 #ifdef  __cplusplus
 }
